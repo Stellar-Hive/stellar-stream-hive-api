@@ -7,7 +7,7 @@ const config: Config = {
     "./components/**/*.{ts,tsx}",
     "./mdx-components.tsx",
   ],
-  darkMode: "media",
+  darkMode: "class",
   theme: {
     extend: {
       colors: {

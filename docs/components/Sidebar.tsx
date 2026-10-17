@@ -26,7 +26,7 @@ export default function Sidebar() {
                   <Link
                     href={item.href}
                     aria-current={active ? "page" : undefined}
-                    className={`block rounded-md px-2 py-1.5 text-sm transition ${
+                    className={`block rounded-md px-2 py-1.5 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:focus-visible:ring-brand-400 ${
                       active
                         ? "bg-brand-100 font-medium text-brand-800 dark:bg-brand-900/40 dark:text-brand-200"
                         : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"

@@ -5,3 +5,22 @@
 html {
   scroll-behavior: smooth;
 }
+
+/* Wide tables: sticky header and zebra rows, inside the scroll container. */
+table thead th {
+  position: sticky;
+  top: 0;
+  background: #ffffff;
+}
+
+table tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+.dark table thead th {
+  background: #020617;
+}
+
+.dark table tbody tr:nth-child(even) {
+  background: rgb(15 23 42 / 0.5);
+}

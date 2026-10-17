@@ -53,13 +53,13 @@ export default function HomePage() {
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
           <Link
             href="/docs/getting-started"
-            className="rounded-md bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700"
+            className="rounded-md bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
           >
             Get started
           </Link>
           <Link
             href="/docs/concepts/streaming-math"
-            className="rounded-md border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900"
+            className="rounded-md border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:focus-visible:ring-brand-400"
           >
             How the math works
           </Link>
@@ -71,7 +71,7 @@ export default function HomePage() {
           <Link
             key={pillar.title}
             href={pillar.href}
-            className="rounded-xl border border-slate-200 p-6 transition hover:border-brand-300 hover:shadow-sm dark:border-slate-800 dark:hover:border-brand-800"
+            className="rounded-xl border border-slate-200 p-6 transition hover:border-brand-300 hover:shadow-sm dark:border-slate-800 dark:hover:border-brand-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:focus-visible:ring-brand-400"
           >
             <h2 className="font-semibold text-slate-900 dark:text-slate-100">{pillar.title}</h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{pillar.body}</p>
