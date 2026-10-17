@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { MDXComponents } from "mdx/types";
 
 import CodeBlock from "@/components/CodeBlock";
@@ -10,6 +11,21 @@ import CodeBlock from "@/components/CodeBlock";
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
     pre: (props) => <CodeBlock {...props} />,
+    a: ({ href = "", children, ...props }) => {
+      if (href.startsWith("/") || href.startsWith("#")) {
+        return (
+          <Link href={href} {...props}>
+            {children}
+          </Link>
+        );
+      }
+      return (
+        <a href={href} target="_blank" rel="noreferrer" {...props}>
+          {children}
+          <span className="sr-only"> (opens in a new tab)</span>
+        </a>
+      );
+    },
     table: (props) => (
       <div className="my-6 overflow-x-auto">
         <table {...props} />
