@@ -71,6 +71,10 @@ npm run build
     notes, warnings, tips, and security call-outs (`components/CalloutBox.tsx`).
   - `<ApiEndpoint method="GET" path="/streams/:id" description="..." />` at
     the top of an API reference section (`components/ApiEndpoint.tsx`).
+  - `<Figure title="..." description="...">` wraps inline SVG diagrams with a
+    visible caption and an accessible label (`components/Figure.tsx`). It is
+    available globally — no import needed. `title` is required; `description`
+    is optional and shown after an em-dash.
   - Fenced code blocks (` ```typescript `, ` ```rust `, ` ```bash `, etc.) are
     automatically rendered through `components/CodeBlock.tsx` with a language
     label and copy button -- no need to wrap them in anything yourself.
@@ -85,6 +89,24 @@ npm run build
   should match the actual contract/API behavior described elsewhere in the
   docs or in `api/src/`. If you're not sure something is still accurate,
   flag it in your PR description rather than guessing.
+
+## Where do I find the source of truth?
+
+When editing a docs page, verify your claims against the relevant source files
+before submitting. If you're not certain something is still accurate, flag it
+in your PR description rather than guessing.
+
+| Docs area | What to check |
+|---|---|
+| Contract behaviour (stream lifecycle, accrual formula, vault, registry) | `src/` in [`stellar-stream-hive-contract`](https://github.com/Stellar-Hive/stellar-stream-hive-contract); its own `docs/` for narrative explanations |
+| API endpoints, response shapes, error codes | `api/src/` in this repo |
+| UI flows, wallet integration, stream creation/management | [`stellar-stream-hive-frontend`](https://github.com/Stellar-Hive/stellar-stream-hive-frontend) |
+| Streaming math / accrual formula | `docs/app/docs/concepts/streaming-math/page.mdx` (the canonical derivation lives here) |
+| Security model | `docs/app/docs/concepts/security-model/page.mdx` |
+| Deployed contract addresses | Not yet available — these are placeholders until the contracts repo deploys; do not replace them with guesses |
+
+If you are unsure which source is authoritative for a particular claim, say so
+in the PR description. A maintainer will point you to the right place.
 
 ## Pull request checklist
 
