@@ -38,11 +38,12 @@ pub enum VaultError {
 ### `initialize`
 
 ```rust
-pub fn initialize(env: Env, admin: Address)
+pub fn initialize(env: Env, admin: Address, stream_contract: Address)
 ```
 
-One-time setup. Stores `admin`, the only address permitted to later call
-`set_stream_contract`.
+One-time setup. Stores both the `admin` address and the `stream_contract` address
+that will be permitted to call `release` and `refund`. Both are set at initialization
+rather than in separate steps.
 
 - **Auth:** `admin.require_auth()`.
 - **Errors:** `AlreadyInitialized`.
@@ -50,19 +51,21 @@ One-time setup. Stores `admin`, the only address permitted to later call
 ### `set_stream_contract`
 
 ```rust
-pub fn set_stream_contract(env: Env, stream_contract: Address)
+pub fn set_stream_contract(env: Env, admin: Address, new_contract: Address)
 ```
 
-Records the single contract address permitted to call `release` and
-`refund`. This is the linchpin of the entire security model -- see
-[Security Model: the caller check](/docs/concepts/security-model#the-caller-check-the-entire-security-boundary-in-one-sentence).
+Records a new contract address permitted to call `release` and `refund`.
+The `admin` parameter is passed explicitly and must match the address stored
+at `initialize` for the call to succeed. This is the linchpin of the entire
+security model -- see [Security Model: the caller check](/docs/concepts/security-model#the-caller-check-the-entire-security-boundary-in-one-sentence).
 
-- **Auth:** `admin.require_auth()` (the address stored by `initialize`).
-- **Errors:** `NotInitialized`, `Unauthorized` if called by anyone but the admin.
+- **Auth:** `admin.require_auth()` and comparison with the stored admin address.
+- **Errors:** `NotInitialized`, `Unauthorized` if called by anyone but the stored admin.
+- **Events:** emits `set_stream_contract`.
 
-<CalloutBox variant="warning" title="Treat this as a one-time deployment step">
-  In a production deployment, call `set_stream_contract` exactly once, as part
-  of initial setup, before any `deposit` happens. Changing it later would let
+<CalloutBox variant="warning" title="Do not change after `initialize`">
+  Although `set_stream_contract` can technically be called multiple times by the
+  admin, do not change it after any `deposit` has occurred. Changing it would let
   a new "Stream contract" (correctly authorized per this check) start issuing
   `release`/`refund` calls against funds that were deposited under a previous
   Stream contract's business rules -- the Vault has no way to know those rules
@@ -89,15 +92,16 @@ authorization is actually required, since it's their tokens being moved.
 ### `release`
 
 ```rust
-pub fn release(env: Env, stream_id: u64, to: Address, amount: i128)
+pub fn release(env: Env, caller: Address, to: Address, token: Address, amount: i128, stream_id: u64)
 ```
 
-Transfers `amount` of the stream's locked token to `to`, decrementing the
+Transfers `amount` of the stream's locked `token` to `to`, decrementing the
 amount locked against `stream_id`. This is one of exactly two functions in the
 entire platform that can move funds out of custody.
 
-- **Auth:** **caller must be the address stored by `set_stream_contract`** --
-  enforced via Soroban's invoking-contract identity, not a parameter. See
+- **Auth:** two-step: (1) `caller.require_auth()` to sign the request, and (2) verify
+  that `caller` matches the address stored by `set_stream_contract`. Both checks
+  must pass; this dual check is the linchpin of the security model. See
   [Security Model](/docs/concepts/security-model#the-caller-check-the-entire-security-boundary-in-one-sentence).
 - **Errors:** `Unauthorized` if called by anything other than the registered
   Stream contract; `InsufficientBalance` if `amount` exceeds what's locked for
@@ -106,7 +110,7 @@ entire platform that can move funds out of custody.
 ### `refund`
 
 ```rust
-pub fn refund(env: Env, stream_id: u64, to: Address, amount: i128)
+pub fn refund(env: Env, caller: Address, to: Address, token: Address, amount: i128, stream_id: u64)
 ```
 
 Identical in every respect to `release` except semantically -- used to return
@@ -114,7 +118,7 @@ unstreamed funds to a stream's sender on cancellation, rather than paying out
 accrued funds to the recipient. Uses the same authorization check as
 `release`.
 
-- **Auth:** same as `release`.
+- **Auth:** same as `release`: caller signs and matches the configured stream contract.
 - **Errors:** same as `release`.
 
 ### `balance_of_stream`
