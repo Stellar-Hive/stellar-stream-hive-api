@@ -190,7 +190,7 @@ pub fn create_stream(
     end_ledger: u32,
     cliff_ledger: u32,
     cancellable: bool,
-) -> u64
+) -> Result<u64, StreamError>
 ```
 
 Validates the schedule, calls `vault.deposit` to pull `total_amount` of
@@ -264,7 +264,7 @@ let stream_id = client.create_stream(
 ### `streamed_amount`
 
 ```rust
-pub fn streamed_amount(env: Env, stream_id: u64) -> i128
+pub fn streamed_amount(env: Env, stream_id: u64) -> Result<i128, StreamError>
 ```
 
 Returns how much of `total_amount` has vested as of the current ledger, using
@@ -272,19 +272,23 @@ the formula in [Streaming Math](/docs/concepts/streaming-math). Pure read;
 does not consider the cliff (see `withdrawable_amount`, which does).
 
 - **Auth:** none (read-only).
-- **Errors:** `StreamNotFound`.
+- **Errors:** `StreamNotFound`; `InvalidTimeRange` if the stored range is
+  empty (defensive only -- `create_stream` already rejects such ranges);
+  `MathOverflow` if the accrual arithmetic overflows.
 
 ### `withdrawable_amount`
 
 ```rust
-pub fn withdrawable_amount(env: Env, stream_id: u64) -> i128
+pub fn withdrawable_amount(env: Env, stream_id: u64) -> Result<i128, StreamError>
 ```
 
 Returns `streamed_amount - withdrawn`, or `0` if the current ledger is before
 `cliff_ledger`.
 
 - **Auth:** none (read-only).
-- **Errors:** `StreamNotFound`.
+- **Errors:** `StreamNotFound`; `InvalidTimeRange` if the stored range is
+  empty (defensive only); `MathOverflow` if the accrual or subtraction
+  overflows.
 
 ### `withdraw`
 
@@ -423,7 +427,7 @@ for the exact split.
 ### `get_stream`
 
 ```rust
-pub fn get_stream(env: Env, stream_id: u64) -> Stream
+pub fn get_stream(env: Env, stream_id: u64) -> Result<Stream, StreamError>
 ```
 
 Returns the full stored `Stream` struct as-is (does not recompute accrual --
@@ -492,7 +496,7 @@ Continue with `--offset 100`, `--offset 150`, etc. until the response is empty.
 ### `get_status`
 
 ```rust
-pub fn get_status(env: Env, stream_id: u64) -> StreamStatus
+pub fn get_status(env: Env, stream_id: u64) -> Result<StreamStatus, StreamError>
 ```
 
 Returns just the `StreamStatus`, derived from the current ledger (see
