@@ -297,9 +297,11 @@ pub fn withdraw(env: Env, recipient: Address, stream_id: u64, amount: i128) -> R
 ```
 
 Withdraws exactly `amount` (which must be `<= withdrawable_amount`) to
-`recipient`. Updates `withdrawn` and calls `vault.release(stream_id, recipient, amount)`.
-It does not write `status`: a stream past `end_ledger` reads as `Completed`
-through `get_status` without any write (see [Lifecycle](#lifecycle)).
+`recipient`. Updates `withdrawn`, calls `vault.release(stream_id, recipient, amount)`,
+and emits `withdraw`. It never writes `status` itself, even when the
+withdrawal exhausts the stream: `Completed` is derived on read, not
+persisted. See [`get_status`](#get_status) for how that live status is
+computed, and [Lifecycle](#lifecycle) for the full state diagram.
 
 - **Auth:** `recipient.require_auth()`.
 - **Errors:** `InvalidAmount`, `StreamNotFound`, `Unauthorized` (not the recipient),
