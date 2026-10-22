@@ -77,8 +77,12 @@ pub enum StreamStatus {
 - **`Cancelled`** -- the sender cancelled before `end_ledger` (see
   [Streaming Math: what happens on cancel](/docs/concepts/streaming-math#what-happens-on-cancel)).
 
-`Pending` and `Active` are the only states `streamed_amount` treats as "still
-accruing" for the purposes of the indexer's `is_active` check; `Completed` and
+There is no `is_active` check in the contract or in the indexer. The derived
+status is purely a function of `now` versus `start_ledger`/`end_ledger`, with
+one override: if the stream has been cancelled, `get_status` always returns
+`Cancelled` regardless of the ledger. Otherwise it's `Pending` before
+`start_ledger`, `Active` from `start_ledger` up to (but not including)
+`end_ledger`, and `Completed` at or after `end_ledger`. `Completed` and
 `Cancelled` are both terminal.
 
 #### Lifecycle
@@ -148,7 +152,7 @@ pub enum StreamError {
     InvalidTimeRange = 5,     // end_ledger <= start_ledger
     InvalidCliff = 6,         // cliff outside [start_ledger, end_ledger]
     StreamNotFound = 7,
-    BeforeCliff = 8,
+    BeforeCliff = 8,          // reserved, currently unused -- see note below
     ExceedsWithdrawable = 9,  // amount > withdrawable_amount
     NotCancellable = 10,
     AlreadyFinalized = 11,    // already cancelled or completed
@@ -160,6 +164,12 @@ pub enum StreamError {
 The CLI prints these codes as `Error(Contract, #N)`. For a lookup table covering
 the Stream, Vault and Registry contracts, see
 [Troubleshooting: error codes](/docs/getting-started#troubleshooting-error-codes).
+
+`BeforeCliff` is reserved and currently unused: no code path returns it. A
+withdrawal attempted before `cliff_ledger` does not get a cliff-specific
+error -- `withdrawable_amount` is `0` until the cliff, so `withdraw` fails
+with `ExceedsWithdrawable` instead (see the [`withdraw`](#withdraw) **Errors**
+below). The variant is kept so error codes stay stable across future releases.
 
 ## Functions
 
@@ -305,7 +315,9 @@ computed, and [Lifecycle](#lifecycle) for the full state diagram.
 
 - **Auth:** `recipient.require_auth()`.
 - **Errors:** `InvalidAmount`, `StreamNotFound`, `Unauthorized` (not the recipient),
-  `ExceedsWithdrawable`.
+  `ExceedsWithdrawable` (also returned for any withdrawal attempted before
+  `cliff_ledger`, since `withdrawable_amount` is `0` until then -- there is
+  no separate `BeforeCliff` error; see [`StreamError`](#streamerror)).
 - **Events:** emits `withdraw`.
 
 `withdrawn` is written before the Vault is called, so the new balance is already
@@ -452,8 +464,11 @@ for the exact split.
 pub fn get_stream(env: Env, stream_id: u64) -> Result<Stream, StreamError>
 ```
 
-Returns the full stored `Stream` struct as-is (does not recompute accrual --
-use `streamed_amount`/`withdrawable_amount` for live figures).
+Returns the full stored `Stream` struct, with `status` recomputed for the
+current ledger (the same derivation `get_status` uses -- see
+[Lifecycle](#lifecycle)) before the struct is returned. Accrual figures
+(`streamed_amount` / `withdrawable_amount`) are *not* part of the struct and
+are not recomputed here; call those functions directly for live amounts.
 
 - **Auth:** none (read-only).
 - **Errors:** `StreamNotFound`.
@@ -610,6 +625,11 @@ reference for the Stream, Vault, and Registry contracts, taken from each
 contract's `events.rs`. Each event's name is its first topic `Symbol`. Events
 with a `#[topic]` field carry that field as a second topic (`U64`). Multi-field
 data is a `Vec` in declaration order; single-value data is the value itself.
+The types below (`Symbol`, `U64`, `Address`, `I128`, ...) are the decoded
+`ScVal` shapes; in the actual Soroban RPC `getEvents` response, each topic and
+the data value are base64-encoded XDR strings that must be decoded with
+`ScVal::from_xdr_base64` (or an equivalent XDR decoder) before they match this
+table.
 
 | Contract | Event | Topics | Data |
 |---|---|---|---|
@@ -684,8 +704,9 @@ withdraw it, minus what they had already withdrawn. See
 
 ### Read a single stream
 
-`get_stream` returns the stored `Stream` as-is, without the live accrual
-figures. Use `withdrawable_amount` for those. Sample output is abbreviated:
+`get_stream` recomputes `status` for the current ledger but does not include
+the live accrual figures. Use `withdrawable_amount` for those. Sample output
+is abbreviated:
 
 ```bash
 stellar contract invoke \
