@@ -438,8 +438,11 @@ for the exact split.
 pub fn get_stream(env: Env, stream_id: u64) -> Stream
 ```
 
-Returns the full stored `Stream` struct as-is (does not recompute accrual --
-use `streamed_amount`/`withdrawable_amount` for live figures).
+Returns the full stored `Stream` struct, with `status` recomputed for the
+current ledger (the same derivation `get_status` uses -- see
+[Lifecycle](#lifecycle)) before the struct is returned. Accrual figures
+(`streamed_amount` / `withdrawable_amount`) are *not* part of the struct and
+are not recomputed here; call those functions directly for live amounts.
 
 - **Auth:** none (read-only).
 - **Errors:** `StreamNotFound`.
@@ -670,8 +673,9 @@ withdraw it, minus what they had already withdrawn. See
 
 ### Read a single stream
 
-`get_stream` returns the stored `Stream` as-is, without the live accrual
-figures. Use `withdrawable_amount` for those. Sample output is abbreviated:
+`get_stream` recomputes `status` for the current ledger but does not include
+the live accrual figures. Use `withdrawable_amount` for those. Sample output
+is abbreviated:
 
 ```bash
 stellar contract invoke \
