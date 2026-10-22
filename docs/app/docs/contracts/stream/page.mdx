@@ -152,7 +152,7 @@ pub enum StreamError {
     InvalidTimeRange = 5,     // end_ledger <= start_ledger
     InvalidCliff = 6,         // cliff outside [start_ledger, end_ledger]
     StreamNotFound = 7,
-    BeforeCliff = 8,
+    BeforeCliff = 8,          // reserved, currently unused -- see note below
     ExceedsWithdrawable = 9,  // amount > withdrawable_amount
     NotCancellable = 10,
     AlreadyFinalized = 11,    // already cancelled or completed
@@ -164,6 +164,12 @@ pub enum StreamError {
 The CLI prints these codes as `Error(Contract, #N)`. For a lookup table covering
 the Stream, Vault and Registry contracts, see
 [Troubleshooting: error codes](/docs/getting-started#troubleshooting-error-codes).
+
+`BeforeCliff` is reserved and currently unused: no code path returns it. A
+withdrawal attempted before `cliff_ledger` does not get a cliff-specific
+error -- `withdrawable_amount` is `0` until the cliff, so `withdraw` fails
+with `ExceedsWithdrawable` instead (see the [`withdraw`](#withdraw) **Errors**
+below). The variant is kept so error codes stay stable across future releases.
 
 ## Functions
 
@@ -303,7 +309,9 @@ through `get_status` without any write (see [Lifecycle](#lifecycle)).
 
 - **Auth:** `recipient.require_auth()`.
 - **Errors:** `InvalidAmount`, `StreamNotFound`, `Unauthorized` (not the recipient),
-  `ExceedsWithdrawable`.
+  `ExceedsWithdrawable` (also returned for any withdrawal attempted before
+  `cliff_ledger`, since `withdrawable_amount` is `0` until then -- there is
+  no separate `BeforeCliff` error; see [`StreamError`](#streamerror)).
 - **Events:** emits `withdraw`.
 
 `withdrawn` is written before the Vault is called, so the new balance is already
