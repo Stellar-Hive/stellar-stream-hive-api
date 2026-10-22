@@ -599,6 +599,11 @@ reference for the Stream, Vault, and Registry contracts, taken from each
 contract's `events.rs`. Each event's name is its first topic `Symbol`. Events
 with a `#[topic]` field carry that field as a second topic (`U64`). Multi-field
 data is a `Vec` in declaration order; single-value data is the value itself.
+The types below (`Symbol`, `U64`, `Address`, `I128`, ...) are the decoded
+`ScVal` shapes; in the actual Soroban RPC `getEvents` response, each topic and
+the data value are base64-encoded XDR strings that must be decoded with
+`ScVal::from_xdr_base64` (or an equivalent XDR decoder) before they match this
+table.
 
 | Contract | Event | Topics | Data |
 |---|---|---|---|
