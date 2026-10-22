@@ -77,8 +77,12 @@ pub enum StreamStatus {
 - **`Cancelled`** -- the sender cancelled before `end_ledger` (see
   [Streaming Math: what happens on cancel](/docs/concepts/streaming-math#what-happens-on-cancel)).
 
-`Pending` and `Active` are the only states `streamed_amount` treats as "still
-accruing" for the purposes of the indexer's `is_active` check; `Completed` and
+There is no `is_active` check in the contract or in the indexer. The derived
+status is purely a function of `now` versus `start_ledger`/`end_ledger`, with
+one override: if the stream has been cancelled, `get_status` always returns
+`Cancelled` regardless of the ledger. Otherwise it's `Pending` before
+`start_ledger`, `Active` from `start_ledger` up to (but not including)
+`end_ledger`, and `Completed` at or after `end_ledger`. `Completed` and
 `Cancelled` are both terminal.
 
 #### Lifecycle
