@@ -138,7 +138,7 @@ of that same transaction's atomic execution.
 | Stream | `transfer_admin` | Current admin and the new admin | `require_auth()` on both addresses |
 | Stream | `withdraw` / `withdraw_max` | The stream's `recipient` | `recipient.require_auth()` |
 | Stream | `cancel_stream` | The stream's `sender`, and only if `cancellable` | `sender.require_auth()` + `cancellable` check |
-| Stream | `streamed_amount` / `withdrawable_amount` / `get_stream` / `get_status` / `get_streams_by_sender` / `get_streams_by_recipient` | Anyone (read-only) | No auth required -- these never move funds or change state |
+| Stream | `streamed_amount` / `withdrawable_amount` / `get_stream` / `get_status` / `get_streams_by_sender` / `get_streams_by_recipient` / `get_streams_by_sender_page` / `get_streams_by_recipient_page` / `count_streams_by_sender` / `count_streams_by_recipient` / `is_paused` / `get_admin` / `get_vault` | Anyone (read-only) | No auth required -- these never move funds or change state |
 | Vault | `initialize` | Deployer, once | `admin.require_auth()` + one-time initialization guard |
 | Vault | `set_stream_contract(admin, new_contract)` | Vault admin | `admin.require_auth()` against the stored admin |
 | Vault | `deposit` | Whoever is funding a stream (typically invoked by the Stream contract on the sender's behalf during `create_stream`) | `require_auth()` on the depositing party |
