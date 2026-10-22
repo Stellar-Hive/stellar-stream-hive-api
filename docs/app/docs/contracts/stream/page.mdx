@@ -414,16 +414,36 @@ pub fn cancel_stream(env: Env, sender: Address, stream_id: u64) -> Result<(), St
 ```
 
 Cancels the stream if `cancellable` is `true` and it hasn't already completed
-or been cancelled. Computes `streamed_amount` at the current ledger, calls
-`vault.release` for any newly-withdrawable portion owed to `recipient` and
-`vault.refund` for the remainder back to `sender`, and sets `status` to
-`Cancelled`. See
+or been cancelled. Sets `status` to `Cancelled` and records `cancelled_at_ledger`
+*first*, which freezes `streamed_amount` at its value for this ledger forever
+-- no later call can inflate what the recipient is owed. It then computes
+`remainder = total_amount - streamed_amount` and, only if that remainder is
+greater than `0`, calls `vault.refund` to send it back to `sender`.
+
+`cancel_stream` never calls `vault.release`. The recipient's share (everything
+`streamed_amount` reports as of the cancel ledger) is **not** paid out here --
+it stays in the Vault and the recipient claims it afterwards through the
+normal `withdraw` / `withdraw_max` path, same as an uncancelled stream. See
 [Streaming Math: what happens on cancel](/docs/concepts/streaming-math#what-happens-on-cancel)
 for the exact split.
 
+<CalloutBox variant="info" title="Cancelling before the cliff">
+  If `cancel_stream` is called while the current ledger is still before
+  `cliff_ledger`, `streamed_amount` for that stream is frozen at `0` instead
+  of the formula's value -- the recipient could never have withdrawn anything
+  accrued before the cliff, so the cancel entitles them to nothing and the
+  sender is refunded the full `total_amount`. The `cancel` event reports
+  `streamed_now = 0` in this case. See the
+  [`[Unreleased]` entry](https://github.com/Stellar-Hive/stellar-stream-hive-contract/blob/main/CHANGELOG.md#unreleased)
+  in the contract's CHANGELOG.
+
+  Example: `cliff_ledger = 500`, `cancel_stream` called at ledger `300` ->
+  the recipient gets `0`, and the sender is refunded the full `total_amount`.
+</CalloutBox>
+
 - **Auth:** `sender.require_auth()`.
 - **Errors:** `StreamNotFound`, `Unauthorized` (not the sender), `NotCancellable`,
-  `AlreadyFinalized`.
+  `AlreadyFinalized`, `MathOverflow` (refund arithmetic overflow).
 - **Events:** emits `cancel`.
 
 ### `get_stream`
