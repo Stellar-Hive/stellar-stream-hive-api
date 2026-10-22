@@ -44,7 +44,7 @@ Every stream object returned by these endpoints has this shape:
 | `id` | string | Stream id, stringified. |
 | `sender` / `recipient` / `token` | string | Stellar strkeys. |
 | `total_amount` / `withdrawn` | string (i128) | On-chain fields, unchanged. |
-| `start_ledger` / `end_ledger` / `cliff_ledger` | number | Plain JSON numbers -- these fit safely in a JS `number` (max realistic ledger sequence is nowhere near 2<sup>53</sup>). |
+| `start_ledger` / `end_ledger` / `cliff_ledger` | number | Plain JSON numbers -- these fit safely in a JS `number` (max realistic ledger sequence is nowhere near 2<sup>53</sup>). `cliff_ledger == start_ledger` means the stream has **no cliff** -- tokens begin vesting from the very first ledger. Only treat it as a real cliff when `cliff_ledger > start_ledger`. |
 | `cancellable` | boolean | |
 | `status` | string | One of `"pending"`, `"active"`, `"completed"`, `"cancelled"`. |
 | `created_at` | number | Unix timestamp (seconds). |

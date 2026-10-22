@@ -46,6 +46,10 @@ interface Stats {
   total_withdrawn: string;
 }
 
+// cliff_ledger == start_ledger means "no cliff" -- tokens vest from ledger 1.
+// Only treat it as a real cliff when cliff_ledger > start_ledger.
+const hasCliff = (s: StreamView): boolean => s.cliff_ledger > s.start_ledger;
+
 class StreamHiveClient {
   constructor(private baseUrl: string) {}
 
