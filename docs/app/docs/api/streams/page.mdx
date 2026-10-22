@@ -21,7 +21,7 @@ Every stream object returned by these endpoints has this shape:
 
 ```json
 {
-  "id": "0",
+  "id": "1",
   "sender": "GABC...XYZ",
   "recipient": "GDEF...UVW",
   "token": "CABC...123",
@@ -41,7 +41,7 @@ Every stream object returned by these endpoints has this shape:
 
 | Field | Type | Notes |
 |---|---|---|
-| `id` | string | Stream id, stringified. |
+| `id` | string | Stream id, stringified. Assigned on-chain by the Stream contract's own counter, which starts at `1` and is never reused (never by the Registry, and never `0`). |
 | `sender` / `recipient` / `token` | string | Stellar strkeys. |
 | `total_amount` / `withdrawn` | string (i128) | On-chain fields, unchanged. |
 | `start_ledger` / `end_ledger` / `cliff_ledger` | number | Plain JSON numbers -- these fit safely in a JS `number` (max realistic ledger sequence is nowhere near 2<sup>53</sup>). `cliff_ledger == start_ledger` means the stream has **no cliff** -- tokens begin vesting from the very first ledger. Only treat it as a real cliff when `cliff_ledger > start_ledger`. |
@@ -133,7 +133,7 @@ curl http://localhost:8080/streams
 
 ```json
 [
-  { "id": "0", "sender": "GABC...", "...": "..." },
+  { "id": "2", "sender": "GABC...", "...": "..." },
   { "id": "1", "sender": "GDEF...", "...": "..." }
 ]
 ```
@@ -174,12 +174,12 @@ curl -i "http://localhost:8080/streams?limit=0"
 | `id` | path | string | The stream id, as returned by `create_stream` on-chain. |
 
 ```bash
-curl http://localhost:8080/streams/0
+curl http://localhost:8080/streams/1
 ```
 
 ```json
 {
-  "id": "0",
+  "id": "1",
   "sender": "GABC...XYZ",
   "recipient": "GDEF...UVW",
   "token": "CABC...123",

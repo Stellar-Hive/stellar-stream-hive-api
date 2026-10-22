@@ -46,7 +46,7 @@ pub struct Stream {
 
 | Field | Type | Meaning |
 |---|---|---|
-| `id` | `u64` | Assigned by the Registry at creation time; stable for the life of the stream. |
+| `id` | `u64` | Assigned by the Stream contract itself at creation time, from a per-contract counter that starts at `1` and is never reused; stable for the life of the stream. |
 | `sender` | `Address` | Funded the stream; may cancel it if `cancellable`. |
 | `recipient` | `Address` | The only address that may withdraw. |
 | `token` | `Address` | The Soroban token contract (e.g. the XLM SAC, or any SEP-41-compatible token) being streamed. |
@@ -140,6 +140,14 @@ either. Only `Cancelled` is ever written to storage after creation.
 - The `status` field on a `Stream` returned by `get_stream` is the stored value:
   `Pending` from creation until a cancel. Use [`get_status`](#get_status) for the
   live state.
+- Only `Cancelled` is ever persisted after creation; `Active` and `Completed`
+  are never written to storage. `create_stream` always stores `Pending`
+  regardless of how `start_ledger` compares to the current ledger, and
+  `Active`/`Completed` are derived purely by `compute_status` (ledger math,
+  no state): `Pending` while `now < start_ledger`, `Active` while
+  `start_ledger <= now < end_ledger`, `Completed` once `now >= end_ledger`,
+  unless the stream was cancelled, in which case `compute_status` always
+  returns `Cancelled`.
 
 ### `StreamError`
 
@@ -179,12 +187,12 @@ below). The variant is kept so error codes stay stable across future releases.
 pub fn initialize(env: Env, admin: Address, vault: Address) -> Result<(), StreamError>
 ```
 
-One-time setup, called immediately after deployment. Stores the addresses of
-the Vault and Registry contracts this Stream contract will call into.
+One-time setup, called immediately after deployment. Records the `admin`
+address and the `vault` that will custody every stream created through this
+contract. There is no Registry parameter: the Stream contract never calls
+the Registry (see the note at the top of this page).
 
-- **Auth:** none enforced by convention beyond "must be called before any
-  other function" -- deployment scripts should call this in the same
-  transaction/batch as instantiation, before publicizing the contract address.
+- **Auth:** `admin.require_auth()`.
 - **Errors:** `AlreadyInitialized` if called a second time.
 
 ### `create_stream`
@@ -205,8 +213,13 @@ pub fn create_stream(
 
 Validates the schedule, calls `vault.deposit` to pull `total_amount` of
 `token` from `sender` into the Vault, stores a new `Stream` with `status` set to
-`Pending`, registers it with the Registry, and returns the new stream's `id`.
-Accrual moves the stream to `Active` from `start_ledger` onward; see
+`Pending` (always -- this is the only status `create_stream` ever writes,
+even if `start_ledger` has already passed; see [`StreamStatus`](#streamstatus)),
+and returns the new stream's `id`. It does not register the stream with the
+[Registry](/docs/contracts/registry); that index is populated separately by
+a caller that invokes the Registry's own `register_stream` function after
+observing the `create` event. Accrual moves the stream to `Active` from
+`start_ledger` onward, derived at read time by `compute_status`; see
 [Lifecycle](#lifecycle).
 
 - **Auth:** `sender.require_auth()`.
