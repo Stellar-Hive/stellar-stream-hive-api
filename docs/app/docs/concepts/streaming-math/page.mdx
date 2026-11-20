@@ -88,6 +88,18 @@ in the worked example below. To turn a future date into a ledger, take the
 seconds from now until that date, divide by 5, and add the result to the
 current ledger sequence.
 
+The table below lists the ledger counts for common durations at 5 seconds per
+ledger. These are **estimates**: ledger close time varies, so treat them as
+planning figures rather than exact boundaries.
+
+| Duration | Seconds | Ledgers (estimate, at 5 s/ledger) |
+|----------|---------|-----------------------------------|
+| 1 hour   | 3,600   | 720                               |
+| 1 day    | 86,400  | 17,280                            |
+| 7 days   | 604,800 | 120,960                           |
+| 30 days  | 2,592,000 | 518,400                         |
+| 365 days | 31,536,000 | 6,307,200                      |
+
 <CalloutBox variant="warning" title="This conversion is an estimate">
   Ledger close times are not exactly 5 seconds and vary with network
   conditions, so `seconds / 5` can drift from the real close time over long

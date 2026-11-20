@@ -106,7 +106,12 @@ curl -s "http://localhost:8080/streams?status=active&limit=20" \
 The indexer only observes three on-chain events (`create`, `withdraw`,
 `cancel`), so it cannot be *told* when a stream moves from pending to
 active or from active to completed -- that happens purely because ledgers
-pass. The API derives it on every read from the latest ledger it has seen:
+pass. The API derives it on every read from the latest ledger it has seen.
+This derived value is the **effective status**; the `status` stored by the
+indexer is only the last status an observed event implied, and can be stale
+until the next read recomputes it. See
+[Effective status](/docs/concepts/glossary#effective-status) in the glossary
+for the stored-versus-effective distinction.
 
 | Condition | `status` |
 |---|---|
@@ -152,7 +157,14 @@ been created yet, or `STREAM_CONTRACT_ID` isn't configured yet (see
 - `500 internal_error` only if computing a stream's live view fails
   unexpectedly (e.g. arithmetic overflow) -- not expected in normal operation.
 
-Example `400` response body:
+### Example `400` responses
+
+Each of the common mistakes below returns HTTP `400` with a JSON body whose
+`error` field is `bad_request` and whose `message` names the offending
+parameter. Match on `error` for the category and on `message` for the
+specific cause.
+
+**Out-of-range `limit`** (`limit=0`, or any value above `200`):
 
 ```bash
 curl -i "http://localhost:8080/streams?limit=0"
@@ -162,6 +174,34 @@ curl -i "http://localhost:8080/streams?limit=0"
 {
   "error": "bad_request",
   "message": "limit must be between 1 and 200"
+}
+```
+
+**Unknown `status`** (anything outside `pending`, `active`, `completed`,
+`cancelled`):
+
+```bash
+curl -i "http://localhost:8080/streams?status=done"
+```
+
+```json
+{
+  "error": "bad_request",
+  "message": "invalid status"
+}
+```
+
+**Bad address** on `/senders/:address` or `/recipients/:address` (not a
+well-formed `G...` account or `C...` contract strkey):
+
+```bash
+curl -i "http://localhost:8080/senders/not-a-strkey"
+```
+
+```json
+{
+  "error": "bad_request",
+  "message": "invalid address"
 }
 ```
 

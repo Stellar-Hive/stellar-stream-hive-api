@@ -3,7 +3,7 @@ import CalloutBox from "@/components/CalloutBox";
 export const metadata = {
   title: "Glossary",
   description:
-    "Short definitions of the Stellar and Soroban terms used across these docs: ledger, stroop, SAC, SEP-41, strkey and cliff.",
+    "Short definitions of the Stellar and Soroban terms used across these docs: ledger, stroop, SAC, SEP-41, strkey, cliff, Freighter and effective status.",
 };
 
 # Glossary
@@ -57,6 +57,25 @@ stream is already accruing. `cliff_ledger` must sit between `start_ledger` and
 accrued since `start_ledger`. See
 [Streaming Math: Cliff behavior](/docs/concepts/streaming-math#cliff-behavior)
 and the [Stream Contract](/docs/contracts/stream#create_stream) examples.
+
+### Freighter
+
+Freighter is a browser wallet for Stellar. It holds your keys and signs Stellar
+transactions, including the Soroban contract calls that create and withdraw
+streams, so you can use the Web App without exposing your secret key to the
+page. See [freighter.app](https://www.freighter.app/) and the
+[Web App guide](/docs/web-app).
+
+### Effective status
+
+A stream's stored status is the value written to contract storage the last time
+the stream was updated. The effective status is what the stream's status is
+right now, derived from the latest ledger: a stream whose stored status is
+still `Active` reads as `Completed` once the current ledger has passed
+`end_ledger`, even if no one has called the contract since. The contract's
+`get_status` and the API both compute the effective status this way, so treat
+it as the source of truth when displaying a stream. See
+[Streams reference: Effective status](/docs/api/streams#effective-status).
 
 <CalloutBox variant="info">
   These definitions cover only the terms above. For the contracts' full error
