@@ -1,0 +1,82 @@
+import CalloutBox from "@/components/CalloutBox";
+
+export const metadata = {
+  title: "Project Status",
+  description:
+    "What is deployed and what is not: contracts on testnet and unaudited, the indexer API read-only with in-memory state, and the frontend on testnet.",
+};
+
+# Project Status
+
+This page states the maturity of each part of Stellar Stream Hive as of the
+last update to this page. It is sourced from the status sections of each
+repository, so check those for the latest state.
+
+<CalloutBox variant="danger" title="Not audited">
+  None of the contracts have been audited. Do not use them with funds you
+  cannot afford to lose.
+</CalloutBox>
+
+## Summary by component
+
+| Component | Network | Status | Source |
+|---|---|---|---|
+| Stream, Vault and Registry contracts | Stellar testnet | Deployed to testnet. Not deployed to mainnet. Not audited. | [Contract README](https://github.com/Stellar-Hive/stellar-stream-hive-contract/blob/main/README.md#status), [DEPLOYMENTS.md](https://github.com/Stellar-Hive/stellar-stream-hive-contract/blob/main/DEPLOYMENTS.md) |
+| Indexer API (`api/`) | Public testnet by default | Read-only. Index is held in memory (no database), so it is rebuilt from chain events after a restart. | [API README](https://github.com/Stellar-Hive/stellar-stream-hive-api/blob/main/api/README.md) |
+| Web app | Testnet by default | Runs against testnet. Mainnet is selectable in the app but has no deployment behind it. | [Frontend README](https://github.com/Stellar-Hive/stellar-stream-hive-frontend#readme) |
+| Docs site (this site) | Not applicable | Built with Next.js and published from this repository. | [`docs/`](https://github.com/Stellar-Hive/stellar-stream-hive-api/tree/main/docs) |
+
+## Contracts
+
+The contracts live in
+[`stellar-stream-hive-contract`](https://github.com/Stellar-Hive/stellar-stream-hive-contract).
+
+- **Testnet:** deployed. The contract repository records the deployment date,
+  contract IDs and WASM hashes in its
+  [`DEPLOYMENTS.md`](https://github.com/Stellar-Hive/stellar-stream-hive-contract/blob/main/DEPLOYMENTS.md).
+  Look the IDs up there rather than copying them from this page, because a
+  redeploy creates new IDs.
+- **Mainnet:** not deployed. The contract repository's `DEPLOYMENTS.md` says
+  mainnet will only follow a successful testnet deployment, a completed audit,
+  and explicit sign-off.
+- **Audit:** not audited.
+
+<CalloutBox variant="warning" title="Placeholder addresses elsewhere in these docs">
+  Some pages in this site still show `<STREAM_CONTRACT_ID>`-style placeholders.
+  Those placeholders are not a statement that nothing is deployed. The
+  testnet IDs are in the contract repository's `DEPLOYMENTS.md`.
+</CalloutBox>
+
+## Indexer API
+
+The indexer lives in [`api/`](https://github.com/Stellar-Hive/stellar-stream-hive-api/tree/main/api)
+and serves a read-only REST API.
+
+- **Read-only.** The API exposes `GET` endpoints only and does not submit
+  transactions.
+- **In-memory state.** The index is kept in process memory with no database.
+  A restart clears it, and the indexer then backfills from chain events again.
+  See [API Overview](/docs/api/overview) for the backfill window.
+- **Network.** The default endpoint is public testnet.
+
+## Frontend
+
+The web app lives in
+[`stellar-stream-hive-frontend`](https://github.com/Stellar-Hive/stellar-stream-hive-frontend).
+
+- **Testnet:** the default configuration targets testnet, using the testnet
+  contract IDs published in the contract repository.
+- **Mainnet:** the network setting accepts `mainnet`, but there is no mainnet
+  deployment for it to talk to.
+
+See the [Web App guide](/docs/web-app) for setup steps.
+
+## What this page does not claim
+
+- It does not claim a mainnet deployment.
+- It does not claim an audit.
+- It does not guarantee uptime or data retention for the testnet API.
+
+If anything here disagrees with a repository's own status section or with the
+on-chain state, trust the repository and the chain, and
+[open an issue](https://github.com/Stellar-Hive/stellar-stream-hive-api/issues).

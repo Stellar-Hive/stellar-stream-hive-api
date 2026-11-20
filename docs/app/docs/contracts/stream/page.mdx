@@ -305,8 +305,10 @@ does not consider the cliff (see `withdrawable_amount`, which does).
 pub fn withdrawable_amount(env: Env, stream_id: u64) -> Result<i128, StreamError>
 ```
 
-Returns `streamed_amount - withdrawn`, or `0` if the current ledger is before
-`cliff_ledger`.
+Returns `streamed_amount - withdrawn`, floored at `0`, or `0` if the current
+ledger is before `cliff_ledger`. For a cancelled stream the cliff is checked
+against `cancelled_at_ledger` instead of the current ledger, so a stream
+cancelled before its cliff is never withdrawable.
 
 - **Auth:** none (read-only).
 - **Errors:** `StreamNotFound`; `InvalidTimeRange` if the stored range is
@@ -330,7 +332,8 @@ computed, and [Lifecycle](#lifecycle) for the full state diagram.
 - **Errors:** `InvalidAmount`, `StreamNotFound`, `Unauthorized` (not the recipient),
   `ExceedsWithdrawable` (also returned for any withdrawal attempted before
   `cliff_ledger`, since `withdrawable_amount` is `0` until then -- there is
-  no separate `BeforeCliff` error; see [`StreamError`](#streamerror)).
+  no separate `BeforeCliff` error; see [`StreamError`](#streamerror)),
+  `MathOverflow` (the `withdrawn` update overflows).
 - **Events:** emits `withdraw`.
 
 `withdrawn` is written before the Vault is called, so the new balance is already
@@ -426,10 +429,13 @@ call and returns the amount withdrawn. Equivalent to reading
 `withdrawable_amount` and passing it to `withdraw`, done atomically so there
 is no race between the read and the withdrawal.
 
-- **Auth:** `recipient.require_auth()`.
+- **Auth:** `withdraw_max` does not call `require_auth()` itself. Authorization
+  is checked by the delegated `withdraw` call, which only runs when something is
+  withdrawable. A call that returns `0` therefore does not require the
+  recipient's signature.
 - **Returns:** the `i128` amount actually withdrawn (may be `0`, which is not
   an error -- it simply means nothing had accrued past the cliff yet).
-- **Errors:** `StreamNotFound`, `Unauthorized`.
+- **Errors:** `StreamNotFound`, `Unauthorized`, `MathOverflow`.
 - **Events:** emits `withdraw` (unless the withdrawn amount is `0`).
 
 ### `cancel_stream`
@@ -592,7 +598,7 @@ Pauses new stream creation. While paused, `create_stream` fails with `Paused`;
 never trap funds that are already streaming.
 
 - **Auth:** admin.require_auth().
-- **Errors:** none (always succeeds if authorized).
+- **Errors:** `NotInitialized` if no admin has been set.
 - **Events:** emits `pause`.
 
 ### `unpause`
@@ -604,7 +610,7 @@ pub fn unpause(env: Env) -> Result<(), StreamError>
 Resumes stream creation after a pause.
 
 - **Auth:** admin.require_auth().
-- **Errors:** none (always succeeds if authorized).
+- **Errors:** `NotInitialized` if no admin has been set.
 - **Events:** emits `unpause`.
 
 ### `is_paused`
@@ -628,7 +634,8 @@ the current admin and the new admin, protecting against accidental or malicious
 transfers to an address that cannot accept the role.
 
 - **Auth:** both `admin.require_auth()` (current admin) and `new_admin.require_auth()` (new admin).
-- **Errors:** `Unauthorized` (if either required signature is missing).
+- **Errors:** `NotInitialized` if no admin has been set. A missing signature
+  is not returned as a `StreamError`: the host rejects the call's authorization.
 - **Events:** emits `admin_transfer`.
 
 ## Events emitted
@@ -692,7 +699,7 @@ stellar contract invoke \
   --network testnet \
   -- cancel_stream \
   --sender "$(stellar keys address sender)" \
-  --stream_id 0
+  --stream_id 1
 ```
 
 ### Check the status afterwards
@@ -704,7 +711,7 @@ reports `Cancelled`:
 stellar contract invoke \
   --id <STREAM_CONTRACT_ID> \
   --network testnet \
-  -- get_status --stream_id 0
+  -- get_status --stream_id 1
 ```
 
 ```text
@@ -730,7 +737,7 @@ stellar contract invoke \
 
 ```text
 {
-  "id": "0",
+  "id": "1",
   "sender": "GABC...XYZ",
   "recipient": "GDEF...UVW",
   "total_amount": "30000000000",
@@ -768,7 +775,7 @@ stellar contract invoke \
 ```text
 [
   {
-    "id": "0",
+    "id": "1",
     "sender": "GABC...XYZ",
     ...
   },

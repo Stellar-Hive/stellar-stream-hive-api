@@ -44,4 +44,6 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm run check-links
+      - run: npm run check-nav
+      - run: npm run check-metadata
       - run: npm run lint

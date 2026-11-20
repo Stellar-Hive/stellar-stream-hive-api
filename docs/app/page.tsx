@@ -80,6 +80,20 @@ export default function HomePage() {
       </section>
 
       <section className="mt-20 rounded-xl border border-slate-200 p-6 dark:border-slate-800">
+        <h2 className="font-semibold text-slate-900 dark:text-slate-100">Project status</h2>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          The contracts are deployed to Stellar testnet and have not been audited. There is
+          no mainnet deployment yet. See what is deployed and what is not.
+        </p>
+        <Link
+          href="/docs/status"
+          className="mt-4 inline-block text-sm font-semibold text-brand-600 hover:underline dark:text-brand-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+        >
+          Read the project status &rarr;
+        </Link>
+      </section>
+
+      <section className="mt-20 rounded-xl border border-slate-200 p-6 dark:border-slate-800">
         <h2 className="font-semibold text-slate-900 dark:text-slate-100">Repositories</h2>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
           Stellar Stream Hive is split across three repositories. This site documents all
