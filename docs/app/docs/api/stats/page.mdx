@@ -30,7 +30,7 @@ curl http://localhost:8080/stats
 |---|---|---|
 | `total_streams` | number | Count of every stream the indexer has observed, in any status. |
 | `active_streams` | number | Count currently in `active` status (`pending` streams are not counted -- see note below). |
-| `total_streamed` | string (i128) | Sum of `streamed_amount` across every stream, computed live at the indexer's latest known ledger. |
+| `total_streamed` | string (i128) | Sum of `streamed_amount` across every stream. For active and pending streams this is computed live at the indexer's latest known ledger; for cancelled streams it is frozen at the value recorded in the cancel event. |
 | `total_withdrawn` | string (i128) | Sum of `withdrawn` across every stream. |
 | `total_value_locked` | string (i128) | Funds the vault still holds for streams: `total_amount - withdrawn` for pending, active and completed streams, and only the recipient's unclaimed share (`streamed_now - withdrawn`) for cancelled ones, since the remainder was refunded to the sender. |
 
@@ -54,7 +54,7 @@ Two streams, one active and one cancelled:
 |---|---|---|---|---|---|
 | A | active | 1000000000 | 300000000 | 600000000 | 700000000 (`total_amount - withdrawn`) |
 | B | cancelled | 500000000 | 100000000 | 200000000 (at cancel) | 100000000 (`streamed_now - withdrawn`) |
-| **Total** | | **1000 deposited** | **300 withdrawn** | | **700 locked** |
+| **Total** | | | | | **800000000 locked** |
 
 Stream A is still active, so the vault holds its entire unwithdrawn balance:
 `1000000000 - 300000000 = 700000000`.
@@ -66,10 +66,8 @@ that portion. Only the recipient's unclaimed share remains locked:
 `200000000 - 100000000 = 100000000`.
 
 Adding the two contributions gives `700000000 + 100000000 = 800000000` in
-raw units -- i.e. 1000 deposited, 300 withdrawn, 700 locked once the
-cancelled stream's refunded remainder is excluded. This is the same
-accounting the `stats_report_value_locked_net_of_withdrawals_and_refunds`
-test exercises.
+raw units. This is the same accounting the
+`stats_report_value_locked_net_of_withdrawals_and_refunds` test exercises.
 
 <CalloutBox variant="info" title="active_streams counts only Active, not Pending">
   This differs slightly from the Stream contract's own notion of "still

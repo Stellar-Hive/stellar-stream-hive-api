@@ -157,7 +157,9 @@ Streams page for how `limit` and `offset` interact with it.
 `Access-Control-Allow-Origin` defaults to `*` (any origin). Setting
 `CORS_ALLOWED_ORIGINS` to a comma-separated list of origins restricts it to
 only those origins; leaving it unset, or setting it to a lone `*`, means any
-origin. Whitespace and trailing slashes are trimmed from each entry.
+origin. Whitespace and trailing slashes are trimmed from each entry, empty
+entries are dropped, and any entry that is not a valid HTTP header value is
+skipped with a warning rather than aborting startup.
 
 Allowed methods are `GET`, `HEAD`, and `OPTIONS`. Only the `Accept` and
 `Content-Type` request headers are allowed. `X-Total-Count` is exposed to
@@ -173,10 +175,10 @@ request could do here that a same-origin one couldn't.
 | Name | Default | Meaning |
 |---|---|---|
 | `SOROBAN_RPC_URL` | `https://soroban-testnet.stellar.org` | Soroban RPC endpoint the indexer polls for events. |
-| `STREAM_CONTRACT_ID` | _(unset)_ | The Stream contract id to index. Unset means the indexer runs but `/streams` stays empty. |
+| `STREAM_CONTRACT_ID` | _(placeholder -- not a real address)_ | The Stream contract id to index. When unset or left as the placeholder, the indexer runs but `/streams` stays empty. |
 | `BIND_ADDR` | `0.0.0.0:8080` | Address and port the HTTP server binds to. |
-| `POLL_INTERVAL_SECS` | `10` | Seconds between Soroban RPC polls. |
-| `INDEXER_BACKFILL_LEDGERS` | `17280` | How many ledgers back the indexer starts from on boot. |
+| `POLL_INTERVAL_SECS` | `10` | Seconds between Soroban RPC polls. A non-integer value is ignored and the default is used. |
+| `INDEXER_BACKFILL_LEDGERS` | `17280` | How many ledgers back the indexer starts from on boot. A non-integer value is ignored and the default is used. |
 | `CORS_ALLOWED_ORIGINS` | _(unset -- any origin)_ | Comma-separated list of allowed origins; unset or `*` means any origin. |
 | `RUST_LOG` | `info` | Log filter for the service (e.g. `debug`, `info`, `warn`). |
 
