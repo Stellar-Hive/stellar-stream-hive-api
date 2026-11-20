@@ -13,6 +13,10 @@ Use GitHub's built-in private reporting feature instead:
 This applies to any security issue affecting the indexer API, the documentation
 site, or this repository's CI/CD configuration.
 
+The documentation site also publishes a machine-readable contact at
+`/.well-known/security.txt` (RFC 9116). It points to the same private reporting
+page above.
+
 ## Non-security bugs
 
 Bugs in API behaviour that do not have a security impact (wrong data, missing

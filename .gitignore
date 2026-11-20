@@ -23,3 +23,6 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+/docs/test-results/
+/docs/playwright-report/
+/docs/blob-report/

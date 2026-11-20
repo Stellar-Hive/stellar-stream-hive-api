@@ -94,9 +94,7 @@ one override: if the stream has been cancelled, `get_status` always returns
     viewBox="0 0 560 220"
     style={{ width: "100%", height: "auto" }}
   >
-    <title id="stream-lifecycle-title">
-      Stream lifecycle. A stream moves from Pending to Active at start_ledger and from Active to Completed at end_ledger. A sender can move a cancellable stream from Pending or Active to Cancelled before end_ledger. Completed and Cancelled are terminal.
-    </title>
+    <title id="stream-lifecycle-title">Stream lifecycle. A stream moves from Pending to Active at start_ledger and from Active to Completed at end_ledger. A sender can move a cancellable stream from Pending or Active to Cancelled before end_ledger. Completed and Cancelled are terminal.</title>
     <defs>
       <marker id="stream-lifecycle-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
         <path d="M0,0 L10,5 L0,10 z" fill="currentColor" />
@@ -343,13 +341,7 @@ recorded when funds move.
     aria-labelledby="withdraw-diagram-title"
     style={{ maxWidth: "100%", height: "auto" }}
   >
-    <title id="withdraw-diagram-title">
-      Sequence diagram of withdraw. The recipient calls the Stream contract,
-      which checks the withdrawable amount and updates withdrawn before calling
-      the Vault's release. The Vault transfers the tokens to the recipient
-      through the token contract. Control returns through the Vault and Stream
-      to the recipient, who receives the amount withdrawn.
-    </title>
+    <title id="withdraw-diagram-title">Sequence diagram of withdraw. The recipient calls the Stream contract, which checks the withdrawable amount and updates withdrawn before calling the Vault's release. The Vault transfers the tokens to the recipient through the token contract. Control returns through the Vault and Stream to the recipient, who receives the amount withdrawn.</title>
     <defs>
       <marker
         id="withdraw-arrow"
