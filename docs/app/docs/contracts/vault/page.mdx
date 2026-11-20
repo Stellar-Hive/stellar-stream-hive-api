@@ -94,8 +94,9 @@ with multiple asset types.
 
 - **Auth:** `from.require_auth()`.
 - **Errors:** `InvalidAmount` if `amount <= 0`; `TokenMismatch` if `token` does not match
-  what's locked for this stream; propagates the token contract's own errors if
-  `from` has insufficient balance or hasn't authorized the transfer.
+  what's locked for this stream; `MathOverflow` if the stream's balance or the
+  token's total locked amount would overflow; propagates the token contract's
+  own errors if `from` has insufficient balance or hasn't authorized the transfer.
 
 ### `release`
 
@@ -111,10 +112,12 @@ entire platform that can move funds out of custody.
   caller; then, `caller` is compared against the Stream contract address
   stored by `set_stream_contract`. See
   [Security Model](/docs/concepts/security-model#the-caller-check-the-entire-security-boundary-in-one-sentence).
-- **Errors:** `Unauthorized` if `caller` does not match the registered Stream
-  contract; `InsufficientBalance` if `amount` exceeds what's locked for
-  `stream_id`; `InvalidAmount` if `amount <= 0`; `TokenMismatch` if `token`
-  does not match the token locked for this stream.
+- **Errors:** `InvalidAmount` if `amount <= 0`; `NotInitialized` if no stream
+  contract has been configured; `Unauthorized` if `caller` does not match the
+  registered Stream contract; `TokenMismatch` if `token` does not match the
+  token locked for this stream; `InsufficientBalance` if `amount` exceeds
+  what's locked for `stream_id`; `MathOverflow` if the stream's balance or the
+  token's total locked amount underflows.
 
 ### `refund`
 
@@ -137,9 +140,9 @@ accrued funds to the recipient. Uses the same authorization and error checks as
 pub fn balance_of_stream(env: Env, stream_id: u64) -> i128
 ```
 
-Returns how much is currently locked in the Vault against `stream_id` (i.e.
-`total_amount - withdrawn - already_refunded`, from the Vault's own
-bookkeeping -- not recomputed from the Stream contract's schedule).
+Returns how much is currently locked in the Vault against `stream_id`: the sum
+of its deposits minus its releases and refunds. This comes from the Vault's own
+bookkeeping and is not recomputed from the Stream contract's schedule.
 
 - **Auth:** none (read-only).
 
@@ -159,7 +162,7 @@ contract's own account.
 ### `get_stream_contract`
 
 ```rust
-pub fn get_stream_contract(env: Env) -> Address
+pub fn get_stream_contract(env: Env) -> Result<Address, VaultError>
 ```
 
 Returns the address of the Stream contract authorized to call `release` and
@@ -172,7 +175,7 @@ correct contract has the custody authority.
 ### `get_admin`
 
 ```rust
-pub fn get_admin(env: Env) -> Address
+pub fn get_admin(env: Env) -> Result<Address, VaultError>
 ```
 
 Returns the address of the admin account authorized to call `set_stream_contract`.

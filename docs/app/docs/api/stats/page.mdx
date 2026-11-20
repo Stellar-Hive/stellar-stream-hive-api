@@ -54,7 +54,7 @@ Two streams, one active and one cancelled:
 |---|---|---|---|---|---|
 | A | active | 1000000000 | 300000000 | 600000000 | 700000000 (`total_amount - withdrawn`) |
 | B | cancelled | 500000000 | 100000000 | 200000000 (at cancel) | 100000000 (`streamed_now - withdrawn`) |
-| **Total** | | **1000 deposited** | **300 withdrawn** | | **700 locked** |
+| **Total** | | **1500000000** (`1000000000 + 500000000`) | **400000000** (`300000000 + 100000000`) | | **800000000** |
 
 Stream A is still active, so the vault holds its entire unwithdrawn balance:
 `1000000000 - 300000000 = 700000000`.
@@ -65,22 +65,19 @@ yet streamed (`total_amount - streamed_now`), so the vault no longer holds
 that portion. Only the recipient's unclaimed share remains locked:
 `200000000 - 100000000 = 100000000`.
 
-Adding the two contributions gives `700000000 + 100000000 = 800000000` in
-raw units -- i.e. 1000 deposited, 300 withdrawn, 700 locked once the
-cancelled stream's refunded remainder is excluded. This is the same
-accounting the `stats_report_value_locked_net_of_withdrawals_and_refunds`
+Adding the two contributions gives `700000000 + 100000000 = 800000000`. The
+same figure follows from the totals row: deposited (`1500000000`) minus
+withdrawn (`400000000`) minus the refund returned to the sender from the
+cancelled stream (`500000000 - 200000000 = 300000000`) is `800000000`. This is
+the same accounting the `stats_report_value_locked_net_of_withdrawals_and_refunds`
 test exercises.
 
 <CalloutBox variant="info" title="active_streams counts only Active, not Pending">
-  This differs slightly from the Stream contract's own notion of "still
-  accruing," which treats `Pending` and `Active` as equivalent for some
-  internal purposes (see
-  [Stream contract: StreamStatus](/docs/contracts/stream#streamstatus)). The
-  API's `/stats` endpoint reports `active_streams` as strictly
-  `status == "active"`, since "how many streams are *currently paying out*
-  right now" is the more useful platform-health number for a stats endpoint,
-  and a `Pending` stream (not yet at its `start_ledger`) isn't paying out
-  anything yet.
+  The API's `/stats` endpoint reports `active_streams` as strictly
+  `status == "active"`. A `Pending` stream (not yet at its `start_ledger`)
+  is not paying out yet, so it is not counted. See
+  [Stream contract: StreamStatus](/docs/contracts/stream#streamstatus) for
+  how the four statuses are defined.
 </CalloutBox>
 
 On an empty index (no streams observed yet), this returns:

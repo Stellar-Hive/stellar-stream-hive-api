@@ -10,9 +10,10 @@ export const metadata = {
 
 This page derives, from first principles, the exact formula the Stream contract
 uses to decide how much of a stream has vested at any moment. Everything on this
-page is normative: the Rust indexer in `stellar-stream-hive-api` re-implements this
-formula verbatim (see `api/src/streaming_math.rs`), and the Stream contract in
-`stellar-stream-hive-contract` is the source of truth it mirrors. If you only read
+page is normative: the Stream contract in `stellar-stream-hive-contract` is the
+source of truth for this formula, and the Rust indexer in `stellar-stream-hive-api`
+mirrors it (see `api/src/streaming_math.rs`), with one difference on the cliff
+noted in the reference implementation callout below. If you only read
 one page before integrating with or auditing this platform, read this one.
 
 ## The mental model
@@ -135,10 +136,13 @@ that make it correct and safe to use with real money: integer precision, the
 cliff, and the edges.
 
 <CalloutBox variant="info" title="Reference implementation">
-  `api/src/streaming_math.rs` implements exactly these four steps with checked
-  `i128` arithmetic. The Rust signature is
+  `api/src/streaming_math.rs` implements these four steps with checked `i128`
+  arithmetic. The Rust signature is
   `streamed_amount(total_amount, start_ledger, end_ledger, cliff_ledger, current_ledger) -> Result<i128, MathError>`.
-  Its 13 unit tests encode every example and edge case on this page.
+  Its `streamed_amount` also returns `0` while `current_ledger < cliff_ledger`,
+  whereas the contract's accrual ignores the cliff (see
+  [Cliff behavior](#cliff-behavior)). Withdrawable amounts still respect the
+  cliff in both. Integrators should use the contract's values as the reference.
 </CalloutBox>
 
 ## Worked example: a 30-day, 3,000 XLM payroll stream
@@ -405,8 +409,10 @@ time; the rest was already in their hands. See
 | `total_amount == 0` | `0` at every ledger | Degenerate but harmless; `progress_percent` also reports `0` rather than dividing by zero. |
 
 <CalloutBox variant="success" title="Try it yourself">
-  Every row in this page's tables is asserted by a unit test in
-  `api/src/streaming_math.rs` (`cargo test` from the `api/` directory). If you're
-  implementing this formula in another language for your own tooling, that test
-  file is the fastest way to check your implementation against the same cases.
+  The core cases on this page (before start, the quarter, half and end points,
+  after end, the cliff, and zero duration) are asserted by unit tests in
+  `api/src/streaming_math.rs` (`cargo test` from the `api/` directory). Not
+  every table row has a test, so treat the tables as worked examples. Note the
+  pre-cliff difference described in the reference implementation above before
+  using that file as a cross-check against the contract.
 </CalloutBox>

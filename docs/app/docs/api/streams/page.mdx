@@ -144,11 +144,11 @@ been created yet, or `STREAM_CONTRACT_ID` isn't configured yet (see
 
 **Errors:**
 
-- `400 bad_request` -- an invalid query parameter:
-  - `limit` of `0` or greater than `200`
-  - an unknown `status` value
-  - an unknown `sort` value
-  - an unknown `order` value
+- `400` -- an invalid query parameter:
+  - `limit` of `0` or greater than `200` (JSON body with `error: "bad_request"`)
+  - an unknown `status`, `sort` or `order` value, or a non-numeric `limit` or
+    `offset` (these are rejected by the query parser before the handler runs,
+    so the body is plain text rather than the JSON error envelope)
 - `500 internal_error` only if computing a stream's live view fails
   unexpectedly (e.g. arithmetic overflow) -- not expected in normal operation.
 
@@ -161,7 +161,7 @@ curl -i "http://localhost:8080/streams?limit=0"
 ```json
 {
   "error": "bad_request",
-  "message": "limit must be between 1 and 200"
+  "message": "invalid request: limit must be at least 1"
 }
 ```
 
@@ -213,8 +213,12 @@ curl http://localhost:8080/streams/1
 | `address` | path | string | A Stellar strkey: either a `G...` account or a `C...` contract address. |
 
 ```bash
-curl http://localhost:8080/senders/GABC...XYZ
+curl http://localhost:8080/senders/GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF
 ```
+
+The address above is the all-zero account key: a well-formed `G...` strkey
+that no stream uses, so the call returns `[]`. Substitute a real account or
+contract address to list actual streams.
 
 Returns a JSON array of [stream view](#stream-view-shape) objects where
 `sender` matches `address` -- shape identical to `GET /streams`, just
@@ -222,8 +226,8 @@ pre-filtered. An address that has never sent a stream returns `[]`, not a
 `404` -- there's nothing invalid about an address with zero streams.
 
 **Errors:** `400 bad_request` if `address` is not a well-formed strkey --
-either a `G...` account or a `C...` contract address. This includes an empty
-address (e.g. a malformed path like `/senders/`) and any malformed value.
+either a `G...` account or a `C...` contract address. Any malformed value is
+rejected this way.
 
 ```bash
 curl -i http://localhost:8080/senders/not-a-strkey
@@ -232,7 +236,7 @@ curl -i http://localhost:8080/senders/not-a-strkey
 ```json
 {
   "error": "bad_request",
-  "message": "invalid address"
+  "message": "invalid request: 'not-a-strkey' is not a valid Stellar account (G...) or contract (C...) address"
 }
 ```
 
@@ -244,12 +248,12 @@ Identical to `GET /senders/:address` in every respect except that it filters
 on `recipient` instead of `sender`.
 
 ```bash
-curl http://localhost:8080/recipients/GDEF...UVW
+curl http://localhost:8080/recipients/GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF
 ```
 
 **Errors:** `400 bad_request` if `address` is not a well-formed strkey --
-either a `G...` account or a `C...` contract address. This includes an empty
-address and any malformed value.
+either a `G...` account or a `C...` contract address. Any malformed value is
+rejected this way.
 
 ```bash
 curl -i http://localhost:8080/recipients/not-a-strkey
@@ -258,7 +262,7 @@ curl -i http://localhost:8080/recipients/not-a-strkey
 ```json
 {
   "error": "bad_request",
-  "message": "invalid address"
+  "message": "invalid request: 'not-a-strkey' is not a valid Stellar account (G...) or contract (C...) address"
 }
 ```
 

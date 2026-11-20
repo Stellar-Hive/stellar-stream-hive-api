@@ -84,8 +84,8 @@ pub fn register_stream(
 )
 ```
 
-Records a newly created stream, normally called by the Stream contract inside
-`create_stream` right after the stream is assigned its id. The stream is
+Records a newly created stream. It is called by the separate caller that
+populates the Registry (see the introduction), not by the Stream contract. The stream is
 recorded with status `Active`. It increments `total_streams`,
 `active_streams` and `total_streamed` (by `amount`), and emits a `register`
 event.
@@ -100,10 +100,13 @@ event.
 pub fn update_stream(env: Env, stream_id: u64, withdrawn: i128, status: StreamStatus)
 ```
 
-Called after every `withdraw`, `withdraw_max`, and `cancel_stream`. `withdrawn`
+The populating caller is expected to call this after every `withdraw`,
+`withdraw_max`, and `cancel_stream` on the Stream contract. `withdrawn`
 is the stream's **absolute** withdrawn total, not a delta. The Registry
 computes the delta against the previously recorded value internally and adds
-it to `total_withdrawn`. It then stores the new `withdrawn` and `status`.
+a positive delta to `total_withdrawn`. A `withdrawn` value below the recorded
+one is stored but does not reduce `total_withdrawn`. It then stores the new
+`withdrawn` and `status`.
 
 `active_streams` changes only when the status moves into or out of `Active`:
 a transition into `Active` increments it, a transition out of `Active`
@@ -155,7 +158,7 @@ this over [`get_all_streams`](#get_all_streams) on a large registry.
 ### `get_stream_record`
 
 ```rust
-pub fn get_stream_record(env: Env, stream_id: u64) -> StreamRecord
+pub fn get_stream_record(env: Env, stream_id: u64) -> Result<StreamRecord, RegistryError>
 ```
 
 Read-only accessor for a single stream's registry-side summary: sender,
@@ -167,7 +170,7 @@ recipient, token, amount, withdrawn and status.
 ### `get_admin`
 
 ```rust
-pub fn get_admin(env: Env) -> Address
+pub fn get_admin(env: Env) -> Result<Address, RegistryError>
 ```
 
 Returns the admin address recorded at `initialize`.
