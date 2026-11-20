@@ -55,7 +55,7 @@ web app does is privileged or otherwise unavailable to you directly.
      though accrual has started. Leave blank for no cliff.
    - **Cancellable** -- whether you (the sender) can cancel this stream
      later. This cannot be changed after creation.
-3. Click **Create Stream**. Freighter will prompt you to sign the
+3. Click **Create stream**. Freighter will prompt you to sign the
    `create_stream` transaction. This is the only signature required to fund
    the entire stream -- no separate token approval (`approve`) transaction is
    signed; instead, `create_stream` invokes the [Vault contract's `deposit`](/docs/contracts/vault#deposit)
@@ -75,7 +75,7 @@ and `decimals()` from the contract to display a friendly token name and to
 convert your amount into the token's smallest unit. If the contract does not
 expose those functions (or the call fails), the app falls back to manual
 entry: you supply the symbol and decimals yourself, and the form shows a
-warning that the values could not be auto-detected. Double-check the decimals
+warning that it couldn't read the token's details. Double-check the decimals
 you enter in that case -- the app trusts them for the conversion.
 
 <CalloutBox variant="warning" title="Wrong decimals change how much is deposited">
@@ -163,7 +163,7 @@ From a stream's detail page, the recipient sees a **Withdraw** button:
 Only visible to the sender, and only when the stream was created with
 **Cancellable** set to true:
 
-1. From the stream's detail page, click **Cancel Stream**.
+1. From the stream's detail page, click **Cancel stream**.
 2. The app shows a confirmation with the exact split that will occur --
    how much the recipient will keep (everything streamed so far) and how much
    will be refunded back to you -- computed via
