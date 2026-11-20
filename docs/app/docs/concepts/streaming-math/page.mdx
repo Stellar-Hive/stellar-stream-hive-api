@@ -1,4 +1,5 @@
 import CalloutBox from "@/components/CalloutBox";
+import StreamingCalculator from "@/components/StreamingCalculator";
 
 export const metadata = {
   title: "Streaming Math",
@@ -403,6 +404,18 @@ time; the rest was already in their hands. See
 | `start_ledger == end_ledger` (zero duration), **contract** | Rejected: `create_stream` fails with `InvalidTimeRange`, and the contract's `math::streamed_amount` returns that error instead of `total_amount` | A zero-duration stream cannot exist on-chain, so there is nothing to accrue. |
 | `start_ledger == end_ledger` (zero duration), **API / frontend** | `total_amount`, the instant `current_ledger >= start_ledger` | Dividing by a zero `total_duration` is undefined, so clients special-case it to "fully vested at start" rather than dividing by zero. This branch exists purely so the client-side math is total (never panics) even for input the contract would reject. |
 | `total_amount == 0` | `0` at every ledger | Degenerate but harmless; `progress_percent` also reports `0` rather than dividing by zero. |
+
+## Try it yourself
+
+The calculator below implements the same formula this page derives, using
+`BigInt` so the multiply-before-divide order and the floor at the final
+division are exact at any size. It also applies the cliff rule: `streamed` is
+computed from `start_ledger` and `end_ledger` alone, while `withdrawable` is
+forced to zero until `current_ledger` reaches `cliff_ledger`. Enter your own
+values, or start from the worked example above (3,000 XLM over 518,400 ledgers
+with no cliff) to cross-check the table.
+
+<StreamingCalculator />
 
 <CalloutBox variant="success" title="Try it yourself">
   Every row in this page's tables is asserted by a unit test in

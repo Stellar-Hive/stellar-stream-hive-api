@@ -51,6 +51,40 @@ Every stream object returned by these endpoints has this shape:
 | `streamed_amount` / `withdrawable_amount` | string (i128) | Computed live -- see [Streaming Math](/docs/concepts/streaming-math). |
 | `progress_percent` | number | Integer 0-100, `streamed_amount / total_amount * 100`, rounded down. |
 
+## Contract `Stream` vs API `Stream`
+
+The API's `Stream` view is the contract's stored `Stream` struct with a few
+fields reshaped for JSON and three computed fields added. The table below maps
+every field on both sides. Fields that exist on only one side are marked
+**contract only** or **API only**.
+
+| Contract field | Contract type | API field | API type | Unit | Notes |
+|---|---|---|---|---|---|
+| `id` | `u64` | `id` | string | -- | Same value; the API stringifies it so it survives JSON round-trips without precision loss. |
+| `sender` | `Address` | `sender` | string | -- | Contract `Address` rendered as a Stellar strkey (`G...` account or `C...` contract). |
+| `recipient` | `Address` | `recipient` | string | -- | Same as `sender`. |
+| `token` | `Address` | `token` | string | -- | Same as `sender`; a token contract strkey. |
+| `total_amount` | `i128` | `total_amount` | string (i128) | token base units | Same value, stringified. |
+| `withdrawn` | `i128` | `withdrawn` | string (i128) | token base units | Same value, stringified. |
+| `start_ledger` | `u32` | `start_ledger` | number | ledger sequence | Same value. |
+| `end_ledger` | `u32` | `end_ledger` | number | ledger sequence | Same value. |
+| `cliff_ledger` | `u32` | `cliff_ledger` | number | ledger sequence | Same value. `cliff_ledger == start_ledger` means no cliff. |
+| `cancellable` | `bool` | `cancellable` | boolean | -- | Same value. |
+| `status` | `StreamStatus` (enum) | `status` | string | -- | Enum variant rendered as a lowercase string: `"pending"`, `"active"`, `"completed"`, `"cancelled"`. |
+| `created_at` | `u32` | `created_at` | number | **contract: ledger sequence; API: Unix timestamp (seconds)** | **Different unit.** The contract stores the ledger at which the stream was created; the API reports a wall-clock Unix timestamp in seconds. Do not compare the two directly. |
+| `cancelled_at_ledger` | `u32` | -- | -- | ledger sequence | **Contract only.** Ledger at which the stream was cancelled, or `0` if it was never cancelled. The API does not expose it; use `status == "cancelled"` to detect cancellation. |
+| -- | -- | `streamed_amount` | string (i128) | token base units | **API only.** Computed live -- see [Streaming Math](/docs/concepts/streaming-math). |
+| -- | -- | `withdrawable_amount` | string (i128) | token base units | **API only.** Computed live -- see [Streaming Math](/docs/concepts/streaming-math). |
+| -- | -- | `progress_percent` | number | integer 0-100 | **API only.** Computed live, rounded down. |
+
+<CalloutBox variant="warning" title="Watch the two `created_at` fields">
+  The contract's `created_at` is a **ledger sequence** (`u32`); the API's
+  `created_at` is a **Unix timestamp in seconds** (`number`). They share a
+  name but not a unit, so don't mix values from the two sources without
+  converting. Likewise, `cancelled_at_ledger` is only available from the
+  contract -- the API surfaces cancellation through `status` alone.
+</CalloutBox>
+
 ## Filtering and pagination
 
 All three list endpoints (`/streams`, `/senders/:address`,
@@ -221,6 +255,47 @@ Returns a JSON array of [stream view](#stream-view-shape) objects where
 pre-filtered. An address that has never sent a stream returns `[]`, not a
 `404` -- there's nothing invalid about an address with zero streams.
 
+Example response (one active stream, one cancelled stream):
+
+```json
+[
+  {
+    "id": "7",
+    "sender": "GABC...XYZ",
+    "recipient": "GDEF...UVW",
+    "token": "CABC...123",
+    "total_amount": "30000000000",
+    "withdrawn": "5000000000",
+    "start_ledger": 1000000,
+    "end_ledger": 1518400,
+    "cliff_ledger": 1000000,
+    "cancellable": true,
+    "status": "active",
+    "created_at": 1735689600,
+    "streamed_amount": "15000000000",
+    "withdrawable_amount": "10000000000",
+    "progress_percent": 50
+  },
+  {
+    "id": "3",
+    "sender": "GABC...XYZ",
+    "recipient": "GHIJ...RST",
+    "token": "CABC...123",
+    "total_amount": "12000000000",
+    "withdrawn": "2000000000",
+    "start_ledger": 900000,
+    "end_ledger": 1200000,
+    "cliff_ledger": 900000,
+    "cancellable": true,
+    "status": "cancelled",
+    "created_at": 1733097600,
+    "streamed_amount": "4000000000",
+    "withdrawable_amount": "2000000000",
+    "progress_percent": 33
+  }
+]
+```
+
 **Errors:** `400 bad_request` if `address` is not a well-formed strkey --
 either a `G...` account or a `C...` contract address. This includes an empty
 address (e.g. a malformed path like `/senders/`) and any malformed value.
@@ -245,6 +320,47 @@ on `recipient` instead of `sender`.
 
 ```bash
 curl http://localhost:8080/recipients/GDEF...UVW
+```
+
+Example response (one active stream, one cancelled stream):
+
+```json
+[
+  {
+    "id": "7",
+    "sender": "GABC...XYZ",
+    "recipient": "GDEF...UVW",
+    "token": "CABC...123",
+    "total_amount": "30000000000",
+    "withdrawn": "5000000000",
+    "start_ledger": 1000000,
+    "end_ledger": 1518400,
+    "cliff_ledger": 1000000,
+    "cancellable": true,
+    "status": "active",
+    "created_at": 1735689600,
+    "streamed_amount": "15000000000",
+    "withdrawable_amount": "10000000000",
+    "progress_percent": 50
+  },
+  {
+    "id": "4",
+    "sender": "GKLM...NOP",
+    "recipient": "GDEF...UVW",
+    "token": "CABC...123",
+    "total_amount": "8000000000",
+    "withdrawn": "1000000000",
+    "start_ledger": 950000,
+    "end_ledger": 1250000,
+    "cliff_ledger": 950000,
+    "cancellable": false,
+    "status": "cancelled",
+    "created_at": 1733702400,
+    "streamed_amount": "2400000000",
+    "withdrawable_amount": "1000000000",
+    "progress_percent": 30
+  }
+]
 ```
 
 **Errors:** `400 bad_request` if `address` is not a well-formed strkey --

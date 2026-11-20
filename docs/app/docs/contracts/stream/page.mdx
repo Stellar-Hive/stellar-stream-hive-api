@@ -60,6 +60,15 @@ pub struct Stream {
 | `created_at` | `u32` | Ledger sequence the stream was created at. |
 | `cancelled_at_ledger` | `u32` | Ledger sequence of cancellation, `0` if never cancelled. Accrual is frozen at this ledger so later ledgers can never inflate what the recipient is owed. |
 
+<CalloutBox variant="info" title="This is not the API's `Stream`">
+  The API returns its own `Stream` view, which differs from the contract struct
+  above: `id` is a string, `created_at` is a Unix timestamp rather than a ledger
+  sequence, `streamed_amount`, `withdrawable_amount` and `progress_percent` are
+  computed at read time, and there is no `cancelled_at_ledger` field. For a
+  field-by-field mapping between the two, see
+  [API: Streams](/docs/api/streams#field-mapping-contract-vs-api).
+</CalloutBox>
+
 ### `StreamStatus`
 
 ```rust

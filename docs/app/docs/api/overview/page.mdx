@@ -99,6 +99,90 @@ Non-2xx responses return:
   a bug.
 </CalloutBox>
 
+## Indexer poll cycle
+
+The indexer runs a poll loop on a fixed interval (`POLL_INTERVAL_SECS`,
+default 10 seconds). Each tick reads the stored cursor, calls Soroban RPC's
+`getEvents`, decodes the returned events, and applies them to the in-memory
+store. It then repeats -- reading the cursor again and issuing another
+`getEvents` call -- until it reaches the chain tip. A per-tick call cap bounds
+how many `getEvents` calls a single tick may make, and the loop stops when the
+cursor does not advance (no new events), resuming on the next tick.
+
+<Figure
+  title="Indexer poll cycle"
+  description="Sequence diagram of one indexer poll tick: the Indexer reads the stored cursor, calls getEvents on Soroban RPC, decodes the returned events, applies them to the in-memory store, and repeats until it reaches the chain tip. A per-tick call cap bounds the number of getEvents calls, and the loop stops when the cursor does not advance."
+>
+  <svg
+    viewBox="0 0 720 420"
+    role="img"
+    aria-label="Sequence diagram of the indexer poll cycle"
+    xmlns="http://www.w3.org/2000/svg"
+    style={{ maxWidth: "100%", height: "auto" }}
+  >
+    <defs>
+      <marker
+        id="poll-arrow"
+        viewBox="0 0 10 10"
+        refX="9"
+        refY="5"
+        markerWidth="7"
+        markerHeight="7"
+        orient="auto-start-reverse"
+      >
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
+      </marker>
+    </defs>
+
+    {/* Participant headers */}
+    <g fill="currentColor" fontSize="13" textAnchor="middle" fontWeight="600">
+      <rect x="40" y="16" width="140" height="34" rx="6" fill="none" stroke="currentColor" />
+      <text x="110" y="38">Indexer</text>
+
+      <rect x="290" y="16" width="140" height="34" rx="6" fill="none" stroke="currentColor" />
+      <text x="360" y="38">Soroban RPC</text>
+
+      <rect x="540" y="16" width="140" height="34" rx="6" fill="none" stroke="currentColor" />
+      <text x="610" y="38">In-memory store</text>
+    </g>
+
+    {/* Lifelines */}
+    <g stroke="currentColor" strokeDasharray="4 4" opacity="0.6">
+      <line x1="110" y1="50" x2="110" y2="400" />
+      <line x1="360" y1="50" x2="360" y2="400" />
+      <line x1="610" y1="50" x2="610" y2="400" />
+    </g>
+
+    {/* Messages */}
+    <g fill="currentColor" fontSize="12" stroke="currentColor">
+      <text x="120" y="82" stroke="none">1. read stored cursor</text>
+      <line x1="110" y1="90" x2="110" y2="90" />
+
+      <line x1="110" y1="110" x2="352" y2="110" markerEnd="url(#poll-arrow)" />
+      <text x="120" y="104" stroke="none">2. getEvents(cursor)</text>
+
+      <line x1="360" y1="150" x2="118" y2="150" markerEnd="url(#poll-arrow)" />
+      <text x="120" y="144" stroke="none">3. events + new cursor</text>
+
+      <text x="120" y="182" stroke="none">4. decode events</text>
+
+      <line x1="110" y1="210" x2="602" y2="210" markerEnd="url(#poll-arrow)" />
+      <text x="120" y="204" stroke="none">5. apply to state</text>
+
+      <line x1="610" y1="250" x2="118" y2="250" markerEnd="url(#poll-arrow)" />
+      <text x="120" y="244" stroke="none">6. ack</text>
+
+      <text x="120" y="282" stroke="none">7. cursor advanced?</text>
+
+      <line x1="110" y1="310" x2="352" y2="310" markerEnd="url(#poll-arrow)" />
+      <text x="120" y="304" stroke="none">8. yes: repeat (within per-tick cap)</text>
+
+      <line x1="360" y1="350" x2="118" y2="350" markerEnd="url(#poll-arrow)" />
+      <text x="120" y="344" stroke="none">9. no: stop until next tick</text>
+    </g>
+  </svg>
+</Figure>
+
 ## Health and readiness
 
 Two unauthenticated endpoints exist for monitoring and orchestration.
