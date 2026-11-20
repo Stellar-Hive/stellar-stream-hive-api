@@ -132,12 +132,60 @@ const allForRecipient = await fetchAll<StreamView>(
 );
 ```
 
+### Browser example
+
+The same paging loop in plain browser JavaScript, with no build step or
+dependencies. It requests a list endpoint with `limit`/`offset`, reads
+`X-Total-Count` from the response headers, and keeps loading pages until every
+item has been collected:
+
+```javascript
+async function fetchAllStreams(baseUrl, path, limit = 200) {
+  const items = [];
+  let offset = 0;
+
+  while (true) {
+    const separator = path.includes("?") ? "&" : "?";
+    const res = await fetch(
+      `${baseUrl}${path}${separator}limit=${limit}&offset=${offset}`,
+    );
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(
+        `${res.status} ${body.error ?? "unknown_error"}: ${body.message ?? res.statusText}`,
+      );
+    }
+
+    const page = await res.json();
+    items.push(...page);
+    offset += page.length;
+
+    const totalHeader = res.headers.get("X-Total-Count");
+    const total = totalHeader === null ? null : Number(totalHeader);
+
+    // Stop on a short page, or once we've seen everything the server counted.
+    if (page.length < limit) break;
+    if (total !== null && offset >= total) break;
+  }
+
+  return items;
+}
+
+// Example: every stream paying a given recipient, across all pages.
+const streams = await fetchAllStreams(
+  "http://localhost:8080",
+  `/recipients/${encodeURIComponent("GABC...XYZ")}`,
+);
+```
+
 <CalloutBox variant="info" title="Reading X-Total-Count in the browser">
   Browsers only expose a response header to JavaScript if the server lists it
   in `Access-Control-Expose-Headers`. The API already sets
   `Access-Control-Expose-Headers: X-Total-Count`, so `res.headers.get("X-Total-Count")`
   works from a browser origin. If you proxy the API through your own backend,
-  make sure that proxy forwards the header too.
+  make sure that proxy forwards the header too. See
+  [API Overview: CORS](/docs/api/overview#cors) for the full set of
+  cross-origin headers the API sends.
 </CalloutBox>
 
 <CalloutBox variant="warning" title="Don't do arithmetic on these fields as numbers">

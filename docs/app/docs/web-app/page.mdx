@@ -1,4 +1,5 @@
 import CalloutBox from "@/components/CalloutBox";
+import Figure from "@/components/Figure";
 
 export const metadata = {
   title: "Web App Guide",
@@ -29,6 +30,12 @@ web app does is privileged or otherwise unavailable to you directly.
    this step.
 4. Once connected, the app displays your shortened address and the active
    network badge in the header (it does not display a wallet XLM balance).
+
+<Figure
+  src="/web-app-connect.png"
+  alt="The web app header after connecting Freighter, showing a shortened wallet address and the active network badge."
+  caption="After approving the connection in Freighter, the header shows your shortened address and the active network badge."
+/>
 
 <CalloutBox variant="info">
   If your testnet account has no funds yet, use
@@ -67,6 +74,12 @@ web app does is privileged or otherwise unavailable to you directly.
    still in the future), **Active** (accruing), **Cliff pending** (accruing,
    but nothing is withdrawable until the cliff ledger is reached),
    **Completed**, or **Cancelled**.
+
+<Figure
+  src="/web-app-create.png"
+  alt="The Create Stream form with recipient, token, amount, start, end, optional cliff, and cancellable fields filled in."
+  caption="The Create Stream form: recipient, token, amount, start and end dates, an optional cliff, and the cancellable toggle."
+/>
 
 ### Custom token detection
 
@@ -121,6 +134,12 @@ figures:
 - **Withdrawable** -- what the recipient could withdraw right now
   (`withdrawable_amount`).
 
+<Figure
+  src="/web-app-balance.png"
+  alt="A stream detail page showing the live progress bar with Streamed and Withdrawable figures."
+  caption="A stream's detail page: the progress bar and the live Streamed and Withdrawable figures update once per second."
+/>
+
 Rather than polling the indexer API on every tick, the web app computes the
 live balance client-side in `useLiveBalance`: it fetches the latest ledger
 sequence and close timestamp from the network, ticks once per second by
@@ -157,6 +176,12 @@ From a stream's detail page, the recipient sees a **Withdraw** button:
    rejected by the contract, not silently allowed by the UI.
 3. Once confirmed, the withdrawn amount lands in your wallet immediately, and
    **Withdrawable** resets toward `0` (climbing again as more time passes).
+
+<Figure
+  src="/web-app-withdraw.png"
+  alt="The Withdraw dialog with Max withdrawable selected and a Confirm withdrawal button."
+  caption="The Withdraw dialog: choose Max withdrawable or enter a custom amount, then confirm and sign in Freighter."
+/>
 
 ## Cancelling a stream
 

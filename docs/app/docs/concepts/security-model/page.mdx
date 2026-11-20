@@ -128,6 +128,24 @@ because Soroban transactions execute host-function calls sequentially within
 one transaction and contract state changes are only visible/committed as part
 of that same transaction's atomic execution.
 
+## Threat summary
+
+The table below condenses the attacks described above (and the ones the
+per-function auth table covers) into a single view: what is at risk, who
+could attempt it, what the attack looks like, how it is mitigated, and where
+in the contracts that mitigation lives. Each row links to the section on this
+page or the contract function that supports it. None of these mitigations
+have been externally audited -- see the notice at the top of this page.
+
+| Asset | Actor | Attack | Mitigation | Enforced by |
+|---|---|---|---|---|
+| Locked funds | Anyone | Call `vault.release` or `vault.refund` directly, skipping the Stream contract | Caller-identity check against `stored_stream_contract_address` -- see [the caller check](#the-caller-check-the-entire-security-boundary-in-one-sentence) | Vault [`release`](#the-caller-check-the-entire-security-boundary-in-one-sentence) and [`refund`](#the-caller-check-the-entire-security-boundary-in-one-sentence) |
+| Locked funds | Anyone | Deploy a malicious contract impersonating the Stream contract and get the Vault to accept its calls | The stored address is a single, specific contract address set via `set_stream_contract`, not "any stream-like contract" -- see [what an attacker would try](#what-an-attacker-would-try) | Vault [`set_stream_contract`](#auth-requirements-per-function) |
+| Locked funds | Admin | Repoint `set_stream_contract` at an attacker-controlled contract | `admin.require_auth()` against the stored admin, plus one-time setup guidance -- see [what an attacker would try](#what-an-attacker-would-try) | Vault [`set_stream_contract`](#auth-requirements-per-function) |
+| Accounting data | Recipient | Double-withdraw or front-run a `withdraw` to withdraw twice | `withdrawn` is updated atomically before `vault.release` within one transaction -- see [what an attacker would try](#what-an-attacker-would-try) | Stream [`withdraw`](#auth-requirements-per-function) |
+| Accounting data | Sender | Cancel to claw back already-vested funds | `cancellable` check plus the streamed-amount split at cancel time | Stream [`cancel_stream`](#auth-requirements-per-function) |
+| Locked funds | Admin | Pause trapping existing streams | Pause only blocks `create_stream`; it never blocks withdraw or cancel -- see [emergency pause](#emergency-pause) | Stream [`pause` / `unpause`](#emergency-pause) |
+
 ## Auth requirements per function
 
 | Contract | Function | Who may call it | Enforced by |
