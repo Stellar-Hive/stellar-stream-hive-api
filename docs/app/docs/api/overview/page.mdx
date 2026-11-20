@@ -80,10 +80,10 @@ Non-2xx responses return:
 
 | HTTP status | `error` | When |
 |---|---|---|
-| `400` | `bad_request` | A path parameter failed basic validation (e.g. an empty address). |
+| `400` | `bad_request` | A path or limit parameter failed validation (e.g. a malformed address, or `limit` outside `1`-`200`). Its `message` is prefixed with `invalid request: `. Query values the parser cannot read (unknown `status`/`sort`/`order`, non-numeric `limit`/`offset`) return a `400` with a plain-text body instead. |
 | `404` | `not_found` | The requested stream id doesn't exist in the index. |
 | `502` | `upstream_unavailable` | Reserved for future endpoints that proxy live Horizon reads; unused by the current routes, which only ever read already-indexed in-memory state. |
-| `500` | `internal_error` | An unexpected server-side failure (e.g. arithmetic overflow computing aggregate stats). Logged server-side with full detail; the response body never leaks internals. |
+| `500` | `internal_error` | An unexpected server-side failure (e.g. arithmetic overflow computing aggregate stats). Logged server-side with full detail. The response `message` is prefixed with `internal error: ` and includes the error's description, so do not treat it as opaque. |
 
 ### Why `/streams/:id` can 404 even for a real stream id
 

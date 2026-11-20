@@ -644,6 +644,11 @@ the data value are base64-encoded XDR strings that must be decoded with
 `ScVal::from_xdr_base64` (or an equivalent XDR decoder) before they match this
 table.
 
+The Stream rows below are checked against
+[`contracts/stream/src/events.rs`](https://github.com/Stellar-Hive/stellar-stream-hive-contract/blob/main/contracts/stream/src/events.rs)
+at commit `33a0840`: event names, topic fields, and data field order all match
+the struct definitions.
+
 | Contract | Event | Topics | Data |
 |---|---|---|---|
 | Stream | `create` | `[Symbol("create"), U64(stream_id)]` | `Vec[Address(sender), Address(recipient), Address(token), I128(total_amount), U32(start_ledger), U32(end_ledger), U32(cliff_ledger), Bool(cancellable)]` |

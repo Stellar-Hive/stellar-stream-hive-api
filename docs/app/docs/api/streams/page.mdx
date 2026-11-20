@@ -49,7 +49,7 @@ Every stream object returned by these endpoints has this shape:
 | `status` | string | One of `"pending"`, `"active"`, `"completed"`, `"cancelled"`. |
 | `created_at` | number | Unix timestamp (seconds). |
 | `streamed_amount` / `withdrawable_amount` | string (i128) | Computed live -- see [Streaming Math](/docs/concepts/streaming-math). |
-| `progress_percent` | number | Integer 0-100, `streamed_amount / total_amount * 100`, rounded down. |
+| `progress_percent` | number | Integer 0-100, `streamed_amount / total_amount * 100`, rounded down. `0` when `total_amount` is `0`. |
 
 ## Filtering and pagination
 
@@ -144,15 +144,19 @@ been created yet, or `STREAM_CONTRACT_ID` isn't configured yet (see
 
 **Errors:**
 
-- `400 bad_request` -- an invalid query parameter:
-  - `limit` of `0` or greater than `200`
-  - an unknown `status` value
-  - an unknown `sort` value
-  - an unknown `order` value
+- `400 bad_request` -- an invalid `limit` value:
+  - `limit` of `0` (message: `limit must be at least 1`)
+  - `limit` greater than `200` (message: `limit must be at most 200`)
+- `400` -- a value the query-string parser cannot read: an unknown `status`,
+  `sort` or `order` value, or a non-numeric `limit` or `offset`. These are
+  rejected before the handler runs, so the body is the parser's plain-text
+  message, **not** the JSON `{ "error", "message" }` envelope. Check the status
+  code, not the body shape, when handling them.
 - `500 internal_error` only if computing a stream's live view fails
   unexpectedly (e.g. arithmetic overflow) -- not expected in normal operation.
 
-Example `400` response body:
+Example `400` response body (the `message` is the server's error text prefixed
+with `invalid request: `):
 
 ```bash
 curl -i "http://localhost:8080/streams?limit=0"
@@ -161,7 +165,7 @@ curl -i "http://localhost:8080/streams?limit=0"
 ```json
 {
   "error": "bad_request",
-  "message": "limit must be between 1 and 200"
+  "message": "invalid request: limit must be at least 1"
 }
 ```
 
@@ -232,10 +236,9 @@ curl -i http://localhost:8080/senders/not-a-strkey
 ```json
 {
   "error": "bad_request",
-  "message": "invalid address"
+  "message": "invalid request: 'not-a-strkey' is not a valid Stellar account (G...) or contract (C...) address"
 }
 ```
-
 ## `GET /recipients/:address`
 
 <ApiEndpoint method="GET" path="/recipients/:address" description="Every stream received by a given address." />
@@ -258,7 +261,7 @@ curl -i http://localhost:8080/recipients/not-a-strkey
 ```json
 {
   "error": "bad_request",
-  "message": "invalid address"
+  "message": "invalid request: 'not-a-strkey' is not a valid Stellar account (G...) or contract (C...) address"
 }
 ```
 

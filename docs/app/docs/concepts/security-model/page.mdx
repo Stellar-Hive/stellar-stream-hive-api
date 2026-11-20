@@ -130,13 +130,16 @@ of that same transaction's atomic execution.
 
 ## Auth requirements per function
 
+Checked against `stellar-stream-hive-contract` at commit `33a0840`
+(`contracts/*/src/lib.rs`). Re-check the table if the contracts change.
+
 | Contract | Function | Who may call it | Enforced by |
 |---|---|---|---|
 | Stream | `initialize` | Deployer, once | `admin.require_auth()` + one-time initialization guard (fails if already initialized) |
 | Stream | `create_stream` | The intended sender (must authorize the deposit) | `sender.require_auth()` |
 | Stream | `pause` / `unpause` | Stream admin | `admin.require_auth()` against the stored admin |
 | Stream | `transfer_admin` | Current admin and the new admin | `require_auth()` on both addresses |
-| Stream | `withdraw` / `withdraw_max` | The stream's `recipient` | `recipient.require_auth()` |
+| Stream | `withdraw` / `withdraw_max` | The stream's `recipient` | `recipient.require_auth()` in `withdraw`; `withdraw_max` checks the recipient and delegates to `withdraw` |
 | Stream | `cancel_stream` | The stream's `sender`, and only if `cancellable` | `sender.require_auth()` + `cancellable` check |
 | Stream | `streamed_amount` / `withdrawable_amount` / `get_stream` / `get_status` / `get_streams_by_sender` / `get_streams_by_recipient` / `get_streams_by_sender_page` / `get_streams_by_recipient_page` / `count_streams_by_sender` / `count_streams_by_recipient` / `is_paused` / `get_admin` / `get_vault` | Anyone (read-only) | No auth required -- these never move funds or change state |
 | Vault | `initialize` | Deployer, once | `admin.require_auth()` + one-time initialization guard |
@@ -144,10 +147,10 @@ of that same transaction's atomic execution.
 | Vault | `deposit` | Whoever is funding a stream (typically invoked by the Stream contract on the sender's behalf during `create_stream`) | `require_auth()` on the depositing party |
 | Vault | `release` | **The Stream contract only** | Caller-identity check against `stored_stream_contract_address` -- see above |
 | Vault | `refund` | **The Stream contract only** | Same caller-identity check as `release` |
-| Vault | `balance_of_stream` / `total_locked` | Anyone (read-only) | No auth required |
+| Vault | `balance_of_stream` / `total_locked` / `get_stream_contract` / `get_admin` | Anyone (read-only) | No auth required |
 | Registry | `initialize` | Deployer, once | `admin.require_auth()` + one-time initialization guard |
 | Registry | `register_stream` / `update_stream` | Anyone -- intentionally open (see [note](#registry-write-access-is-intentionally-open)) | No caller check; these functions take no caller and the Registry can never move funds |
-| Registry | `get_all_streams` / `get_stats` / `get_active_streams` | Anyone (read-only) | No auth required |
+| Registry | `get_all_streams` / `get_stats` / `get_active_streams` / `get_stream_record` / `get_streams_page` / `stream_count` / `get_admin` | Anyone (read-only) | No auth required |
 
 ### Registry write access is intentionally open
 
