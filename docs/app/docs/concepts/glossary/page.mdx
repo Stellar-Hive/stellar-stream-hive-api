@@ -58,6 +58,23 @@ accrued since `start_ledger`. See
 [Streaming Math: Cliff behavior](/docs/concepts/streaming-math#cliff-behavior)
 and the [Stream Contract](/docs/contracts/stream#create_stream) examples.
 
+### Base units
+
+A base unit is the smallest indivisible unit of a token, so an amount in base
+units is a whole number with no decimal point. The Stream contract stores every
+amount (`total_amount`, `withdrawn`, and so on) in base units of the streamed
+token, which is why 100 XLM is `1_000_000_000` rather than `100`. See
+[Streaming Math: Units and decimals](/docs/concepts/streaming-math#units-and-decimals).
+
+### i128
+
+`i128` is the 128-bit signed integer type the contract uses for every amount.
+Amounts are `i128` integers in a token's smallest unit, never floating-point
+numbers. In JSON they are serialized as strings, not numbers, so a value like
+`"1000000000"` must be parsed as an integer rather than read as a JavaScript
+number. See
+[Streaming Math: Units and decimals](/docs/concepts/streaming-math#units-and-decimals).
+
 <CalloutBox variant="info">
   These definitions cover only the terms above. For the contracts' full error
   codes, see the [Stream Contract](/docs/contracts/stream#streamerror) error

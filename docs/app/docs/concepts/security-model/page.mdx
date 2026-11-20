@@ -179,13 +179,73 @@ are already streaming can always be withdrawn or cancelled. This is covered by
 ## State archival
 
 Soroban charges for ledger storage through a time-to-live (TTL), measured in
-ledgers. When the contracts write an entry, they extend its TTL to 241,920
-ledgers, about 14 days at roughly 5 seconds per ledger. An entry that goes
-untouched for longer than its TTL can be archived by the network. An archived
-entry is not deleted, but the contract cannot read it until it is restored.
+ledgers. When a contract writes an entry, it extends that entry's TTL so the
+entry stays live for at least a configured number of ledgers. An entry that
+goes untouched for longer than its TTL can be archived by the network. An
+archived entry is not deleted, but the contract cannot read it until it is
+restored.
 
-- **What is bumped:** the entries a contract writes. Each write extends that
-  entry's TTL.
-- **Where to look:** the TTL logic is in each contract's `storage.rs`. The
-  Stream contract lives in
-  [stellar-stream-hive-contract](https://github.com/Stellar-Hive/stellar-stream-hive-contract).
+The TTL logic lives in each contract's `storage.rs` in the
+[stellar-stream-hive-contract](https://github.com/Stellar-Hive/stellar-stream-hive-contract)
+repo. Each contract defines two constants:
+
+- `LEDGER_THRESHOLD` -- the minimum remaining TTL, in ledgers, below which a
+  write triggers a bump. If an entry has more than this many ledgers left, the
+  write leaves its TTL alone.
+- `LEDGER_BUMP` -- the number of ledgers the entry's TTL is extended to when a
+  bump happens.
+
+At roughly 5 seconds per ledger, a ledger count converts to days as
+`ledgers * 5 / 86400`. The exact values of `LEDGER_THRESHOLD` and `LEDGER_BUMP`
+are defined in each contract's `storage.rs`; read them there rather than
+relying on a copy here, since they can change between contract versions.
+
+### Which functions extend which entries
+
+The tables below list, per function, the storage entries whose TTL that
+function extends. "Instance" means the contract instance entry (which holds
+contract-wide config such as the admin address). "Per-stream" means the
+stream record entry keyed by stream ID. "Per-address" means the sender/recipient
+index entries used to enumerate a given address's streams.
+
+**Stream contract**
+
+| Function | Instance | Per-stream | Per-address |
+|---|---|---|---|
+| `initialize` | Extends | -- | -- |
+| `create_stream` | Extends | Extends (new stream) | Extends (sender and recipient indexes) |
+| `withdraw` / `withdraw_max` | Extends | Extends (updated `withdrawn`) | -- |
+| `cancel_stream` | Extends | Extends (updated status) | -- |
+| `pause` / `unpause` | Extends | -- | -- |
+| `transfer_admin` | Extends | -- | -- |
+| Read-only getters | -- | -- | -- |
+
+**Vault contract**
+
+| Function | Instance | Per-stream | Per-address |
+|---|---|---|---|
+| `initialize` | Extends | -- | -- |
+| `set_stream_contract` | Extends | -- | -- |
+| `deposit` | Extends | Extends (per-stream balance) | -- |
+| `release` | Extends | Extends (per-stream balance) | -- |
+| `refund` | Extends | Extends (per-stream balance) | -- |
+| Read-only getters | -- | -- | -- |
+
+**Registry contract**
+
+| Function | Instance | Per-stream | Per-address |
+|---|---|---|---|
+| `initialize` | Extends | -- | -- |
+| `register_stream` | Extends | Extends (new registry entry) | -- |
+| `update_stream` | Extends | Extends (updated registry entry) | -- |
+| Read-only getters | -- | -- | -- |
+
+<CalloutBox variant="warning" title="Verify against the source">
+  The tables above summarize the intent of each contract's `storage.rs`. If a
+  function's behavior differs from this table in the version you are reading,
+  trust the source: the TTL bumps are an implementation detail of the contract
+  and this page is a reading aid, not a specification. Read-only getters do
+  not write, so they never extend a TTL -- which also means a stream that is
+  only ever read (never withdrawn or cancelled) can still be archived once its
+  TTL lapses.
+</CalloutBox>

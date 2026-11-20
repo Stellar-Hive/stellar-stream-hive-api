@@ -1,4 +1,5 @@
 import CalloutBox from "@/components/CalloutBox";
+import DateToLedgerConverter from "@/components/DateToLedgerConverter";
 
 export const metadata = {
   title: "Streaming Math",
@@ -95,6 +96,14 @@ current ledger sequence.
   Treat any date-to-ledger conversion as an approximation for planning and
   display.
 </CalloutBox>
+
+Rather than doing that arithmetic by hand, use the converter below. Enter the
+target date and the current ledger sequence number (your wallet or a Stellar
+block explorer will show the latest ledger), and it applies the same
+`seconds / 5` estimate described above. The result is an **estimate** only
+&mdash; it is not read from the chain and can drift from the real close time.
+
+<DateToLedgerConverter />
 
 ## Deriving the formula
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { MDXComponents } from "mdx/types";
 
 import CodeBlock from "@/components/CodeBlock";
+import DateToLedgerConverter from "@/components/DateToLedgerConverter";
 import Figure from "@/components/Figure";
 
 /**
@@ -9,7 +10,9 @@ import Figure from "@/components/Figure";
  * are intentionally *not* included here -- pages import them explicitly since
  * they take props (variant, method, path) that a blanket override can't supply.
  * `Figure` is exported here so diagrams have a consistent accessible wrapper
- * without an explicit import on every page.
+ * without an explicit import on every page. `DateToLedgerConverter` is exported
+ * here so the date-to-ledger widget can be dropped into any page without an
+ * explicit import.
  */
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
@@ -35,6 +38,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
       </div>
     ),
     Figure,
+    DateToLedgerConverter,
     ...components,
   };
 }

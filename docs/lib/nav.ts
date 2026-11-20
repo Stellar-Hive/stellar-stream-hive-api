@@ -45,4 +45,8 @@ export const nav: NavGroup[] = [
       { title: "Integration", href: "/docs/integration" },
     ],
   },
+  {
+    title: "Resources",
+    items: [{ title: "Links and Resources", href: "/docs/resources" }],
+  },
 ];
