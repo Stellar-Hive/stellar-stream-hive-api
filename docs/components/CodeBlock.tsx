@@ -2,6 +2,31 @@
 
 import { isValidElement, useState, type ReactElement, type ReactNode } from "react";
 
+/** Friendly names for common fence languages. Anything not listed falls back to the raw fence value. */
+const LANGUAGE_LABELS: Record<string, string> = {
+  bash: "Shell",
+  sh: "Shell",
+  shell: "Shell",
+  ts: "TypeScript",
+  typescript: "TypeScript",
+  tsx: "TSX",
+  js: "JavaScript",
+  javascript: "JavaScript",
+  rs: "Rust",
+  rust: "Rust",
+  json: "JSON",
+  toml: "TOML",
+  yaml: "YAML",
+  yml: "YAML",
+  text: "Text",
+  txt: "Text",
+};
+
+/** Returns the display label for a fence language, or the raw value when there is no friendly name. */
+function languageLabel(language: string): string {
+  return LANGUAGE_LABELS[language.toLowerCase()] ?? language;
+}
+
 /** Recursively flattens MDX-rendered code children back into plain text for the copy button. */
 function extractText(node: ReactNode): string {
   if (typeof node === "string" || typeof node === "number") return String(node);
@@ -27,6 +52,7 @@ export default function CodeBlock(props: { children?: ReactNode }) {
   const className = codeElement?.props.className ?? "";
   const match = /language-(\w+)/.exec(className);
   const language = match?.[1] ?? "text";
+  const label = languageLabel(language);
   const text = extractText(children).replace(/\n$/, "");
 
   const handleCopy = async () => {
@@ -43,7 +69,7 @@ export default function CodeBlock(props: { children?: ReactNode }) {
   return (
     <div className="group relative my-6 overflow-hidden rounded-lg border border-slate-800 bg-slate-950">
       <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-4 py-1.5">
-        <span className="text-xs font-medium uppercase tracking-wide text-slate-400">{language}</span>
+        <span className="text-xs font-medium text-slate-400">{label}</span>
         <button
           type="button"
           aria-label="Copy code"

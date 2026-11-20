@@ -1,5 +1,23 @@
 import Link from "next/link";
 
+const HOW_IT_WORKS = [
+  {
+    title: "Create",
+    body: "The sender locks the total amount in a stream with a start and end ledger, and an optional cliff.",
+    href: "/docs/getting-started#quickstart-create-your-first-testnet-stream",
+  },
+  {
+    title: "Accrue",
+    body: "Funds vest linearly ledger by ledger between the start and end, so the recipient's claim grows continuously.",
+    href: "/docs/concepts/streaming-math",
+  },
+  {
+    title: "Withdraw or cancel",
+    body: "The recipient withdraws what has streamed so far at any time. The sender can cancel, returning the unstreamed remainder.",
+    href: "/docs/contracts/stream",
+  },
+];
+
 const PILLARS = [
   {
     title: "Stream contract",
@@ -64,6 +82,28 @@ export default function HomePage() {
             How the math works
           </Link>
         </div>
+      </section>
+
+      <section aria-labelledby="how-it-works" className="mt-20">
+        <h2 id="how-it-works" className="text-center text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">
+          How it works
+        </h2>
+        <ol className="mt-8 grid gap-6 sm:grid-cols-3">
+          {HOW_IT_WORKS.map((step, index) => (
+            <li key={step.title}>
+              <Link
+                href={step.href}
+                className="flex h-full flex-col rounded-xl border border-slate-200 p-6 transition hover:border-brand-300 hover:shadow-sm dark:border-slate-800 dark:hover:border-brand-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:focus-visible:ring-brand-400"
+              >
+                <span className="text-xs font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">
+                  Step {index + 1}
+                </span>
+                <h3 className="mt-2 font-semibold text-slate-900 dark:text-slate-100">{step.title}</h3>
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{step.body}</p>
+              </Link>
+            </li>
+          ))}
+        </ol>
       </section>
 
       <section className="mt-20 grid gap-6 sm:grid-cols-2">
