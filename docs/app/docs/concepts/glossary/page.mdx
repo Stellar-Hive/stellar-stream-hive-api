@@ -3,7 +3,7 @@ import CalloutBox from "@/components/CalloutBox";
 export const metadata = {
   title: "Glossary",
   description:
-    "Short definitions of the Stellar and Soroban terms used across these docs: ledger, stroop, SAC, SEP-41, strkey and cliff.",
+    "Short definitions of the Stellar and Soroban terms used across these docs: ledger, stroop, SAC, SEP-41, strkey, cliff, Soroban, XDR, ScVal, TTL and archival.",
 };
 
 # Glossary
@@ -57,6 +57,36 @@ stream is already accruing. `cliff_ledger` must sit between `start_ledger` and
 accrued since `start_ledger`. See
 [Streaming Math: Cliff behavior](/docs/concepts/streaming-math#cliff-behavior)
 and the [Stream Contract](/docs/contracts/stream#create_stream) examples.
+
+### Soroban
+
+Soroban is Stellar's smart-contract platform: it runs WebAssembly contracts on
+the Stellar network and gives them access to ledger state and to assets such as
+the XLM SAC. The Stream contract is a Soroban contract, so creating and
+withdrawing from a stream are Soroban contract invocations. See the
+[official Soroban documentation](https://developers.stellar.org/docs/build/smart-contracts/overview).
+
+### XDR
+
+XDR (External Data Representation) is Stellar's binary serialization format. It
+defines how ledgers, transactions, and contract data are encoded on the wire
+and in the ledger. `ScVal` is the Soroban value type: every contract argument,
+return value, and stored entry is an `ScVal` encoded in XDR. See Stellar's
+[XDR documentation](https://developers.stellar.org/docs/learn/encyclopedia/data-format/xdr).
+
+### TTL
+
+A TTL (time-to-live) is the number of ledgers a Soroban ledger entry remains
+live before it becomes eligible for archival. Instance storage shares a TTL with
+its contract instance, while persistent storage entries each carry their own
+TTL. See [Security Model: State archival](/docs/concepts/security-model#state-archival).
+
+### Archival
+
+When a ledger entry's TTL lapses, the entry is archived rather than deleted: it
+is no longer readable by the contract until it is restored, which brings it
+back into live state. See
+[Security Model: State archival](/docs/concepts/security-model#state-archival).
 
 <CalloutBox variant="info">
   These definitions cover only the terms above. For the contracts' full error

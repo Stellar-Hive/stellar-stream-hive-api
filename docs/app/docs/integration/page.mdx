@@ -264,3 +264,11 @@ field. The same response also reports `synced`, `contract_configured`, and
 on the API for this value, you can fetch the latest ledger from Horizon or call
 `getLatestLedger` on the Soroban RPC server directly -- both are authoritative
 and give you the same ledger sequence number.
+
+## Event wire format
+
+Contract events arrive from Soroban RPC with their payloads as base64-encoded
+XDR strings, and the indexer decodes them with `ScVal::from_xdr_base64` before
+mapping them onto the stream fields shown above. If you're decoding events
+yourself, see [Glossary: XDR](/docs/concepts/glossary#xdr) for what XDR and
+`ScVal` are and where Stellar documents the format.
