@@ -85,6 +85,33 @@ Non-2xx responses return:
 | `502` | `upstream_unavailable` | Reserved for future endpoints that proxy live Horizon reads; unused by the current routes, which only ever read already-indexed in-memory state. |
 | `500` | `internal_error` | An unexpected server-side failure (e.g. arithmetic overflow computing aggregate stats). Logged server-side with full detail; the response body never leaks internals. |
 
+### Handling errors in clients
+
+Every non-2xx response uses the same `{ error, message }` shape. A TypeScript
+client can branch on the `error` kind to show the user an actionable message:
+
+```ts
+interface ApiErrorBody {
+  error: string;
+  message: string;
+}
+
+function userFacingMessage(body: ApiErrorBody, status: number): string {
+  switch (body.error) {
+    case "not_found":
+      return "That stream could not be found.";
+    case "bad_request":
+      return `Invalid request: ${body.message}`;
+    case "upstream_unavailable":
+      return "The indexer is temporarily unavailable. Try again later.";
+    case "internal_error":
+      return "Something went wrong on the server. Please retry.";
+    default:
+      return `Unexpected error (${status}): ${body.message}`;
+  }
+}
+```
+
 ### Why `/streams/:id` can 404 even for a real stream id
 
 <CalloutBox variant="info">
