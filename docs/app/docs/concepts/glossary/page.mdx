@@ -3,7 +3,7 @@ import CalloutBox from "@/components/CalloutBox";
 export const metadata = {
   title: "Glossary",
   description:
-    "Short definitions of the Stellar and Soroban terms used across these docs: ledger, stroop, SAC, SEP-41, strkey and cliff.",
+    "Short definitions of the Stellar and Soroban terms used across these docs: ledger, stroop, SAC, SEP-41, strkey, cliff, Soroban RPC and Horizon.",
 };
 
 # Glossary
@@ -57,6 +57,26 @@ stream is already accruing. `cliff_ledger` must sit between `start_ledger` and
 accrued since `start_ledger`. See
 [Streaming Math: Cliff behavior](/docs/concepts/streaming-math#cliff-behavior)
 and the [Stream Contract](/docs/contracts/stream#create_stream) examples.
+
+### Soroban RPC
+
+Soroban RPC is the JSON-RPC service for Soroban smart contracts. It exposes
+methods such as `getEvents` and `getLatestLedger`, and it only retains recent
+history. **The indexer reads from Soroban RPC**: it polls `getEvents` on the
+endpoint set in `SOROBAN_RPC_URL`, filtered to the Stream contract. The web app
+does not talk to the chain for stream data on its own; it shows what the
+[indexer API](/docs/api/overview) serves. See
+[Getting Started](/docs/getting-started#network-guide) for the endpoints and the
+official [Soroban RPC documentation](https://developers.stellar.org/docs/data/apis/rpc).
+
+### Horizon
+
+Horizon is the older REST API for the Stellar network. It serves classic
+operations, accounts, and transaction history. **The indexer does not use
+Horizon**, and neither does the API's current set of routes. Horizon only comes up in these docs as an
+alternative source for the latest ledger number. Don't confuse it with Soroban
+RPC when configuring `SOROBAN_RPC_URL`. See the official
+[Horizon documentation](https://developers.stellar.org/docs/data/apis/horizon).
 
 <CalloutBox variant="info">
   These definitions cover only the terms above. For the contracts' full error
