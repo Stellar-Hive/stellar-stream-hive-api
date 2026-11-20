@@ -264,3 +264,115 @@ field. The same response also reports `synced`, `contract_configured`, and
 on the API for this value, you can fetch the latest ledger from Horizon or call
 `getLatestLedger` on the Soroban RPC server directly -- both are authoritative
 and give you the same ledger sequence number.
+
+## Deriving `status` client-side
+
+The API's `status` field is derived, not stored. If you are working from
+contract reads instead of the indexer, you can compute the same value from the
+`Stream` fields. The rules match the contract's `compute_status` and the
+[Streams reference](/docs/reference/streams):
+
+- `cancelled` is terminal -- once the flag is set, the status is `cancelled`
+  regardless of the ledger.
+- `currentLedger < start_ledger` &rarr; `pending`.
+- `start_ledger <= currentLedger < end_ledger` &rarr; `active`.
+- `currentLedger >= end_ledger` &rarr; `completed`.
+
+```typescript
+type StreamStatus = "pending" | "active" | "completed" | "cancelled";
+
+interface StreamFields {
+  cancelled: boolean;
+  start_ledger: number;
+  end_ledger: number;
+}
+
+/**
+ * Mirrors the contract's compute_status. `currentLedger` is the latest ledger
+ * sequence number (from GET /ready, Horizon, or Soroban RPC getLatestLedger).
+ */
+function computeStatus(stream: StreamFields, currentLedger: number): StreamStatus {
+  if (stream.cancelled) return "cancelled";
+  if (currentLedger < stream.start_ledger) return "pending";
+  if (currentLedger < stream.end_ledger) return "active";
+  return "completed";
+}
+```
+
+<CalloutBox variant="info" title="Cancelled vs. completed">
+  A stream that was cancelled after it had already reached `end_ledger` still
+  reports `cancelled`, because the flag is terminal. Check `cancelled` first,
+  as the function above does.
+</CalloutBox>
+
+## Reading events directly from Soroban RPC
+
+If you don't want to depend on the indexer, you can read contract events
+yourself with the Soroban RPC `getEvents` method. This example targets
+**testnet**; substitute the RPC URL and contract id for the network and
+deployment you are using.
+
+```typescript
+const RPC_URL = "https://soroban-testnet.stellar.org";
+const STREAM_CONTRACT_ID = "C..."; // the Stream contract id for your deployment
+
+// startLedger must be within the RPC's retention window. Use the latest
+// ledger (or a recent one) to start, then page forward with the cursor.
+const request = {
+  jsonrpc: "2.0",
+  id: 1,
+  method: "getEvents",
+  params: {
+    startLedger: 0, // replace with a recent ledger; see the retention note below
+    filters: [
+      {
+        type: "contract",
+        contractIds: [STREAM_CONTRACT_ID],
+        // Optional: narrow to specific topics, e.g. only "withdraw" events.
+        // Each entry is an ScVal in base64 XDR; "*" matches any value.
+        topics: [["*"]],
+      },
+    ],
+    pagination: { limit: 100 },
+  },
+};
+
+const res = await fetch(RPC_URL, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(request),
+});
+const { result } = await res.json();
+// result.events: array of { type, ledger, contractId, id, topic, value, ... }
+// result.cursor: pass as pagination.cursor in the next request to page forward.
+```
+
+Each event's `topic` and `value` are arrays of base64-encoded XDR `ScVal`s.
+Decode them with `@stellar/stellar-sdk`'s `scValToNative` to get plain JS
+values:
+
+```typescript
+import { scValToNative, xdr } from "@stellar/stellar-sdk";
+
+for (const event of result.events) {
+  // topic[0] is conventionally the event name (e.g. "create", "withdraw").
+  const topics = event.topic.map((t: string) =>
+    scValToNative(xdr.ScVal.fromXDR(t, "base64")),
+  );
+  const data = scValToNative(xdr.ScVal.fromXDR(event.value, "base64"));
+
+  console.log(event.ledger, topics, data);
+}
+```
+
+To page through results, send the next request with
+`pagination: { cursor: result.cursor }` and keep the same `filters`. Stop when
+`result.events` is empty.
+
+<CalloutBox variant="warning" title="RPC retention is limited">
+  Soroban RPC only retains events for a limited ledger window; events older
+  than that window are no longer served by `getEvents`. For historical events
+  -- or to backfill a new integration -- use the indexer API, which keeps the
+  full history. The exact retention window is a property of the RPC provider
+  you use, so check its documentation rather than assuming a fixed value.
+</CalloutBox>

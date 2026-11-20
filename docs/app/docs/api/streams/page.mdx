@@ -101,6 +101,63 @@ curl -s "http://localhost:8080/streams?status=active&limit=20" \
   in `jq`.
 </CalloutBox>
 
+### Pagination recipes
+
+Each list request is a **snapshot** taken when the request is served. If new
+streams are created between two requests, the underlying list changes and
+`offset`-based pages can shift -- a stream you already saw may appear again on
+the next page, or one may be skipped. The recipes below show the common
+patterns; for a fully consistent walk, re-fetch from `offset=0` or page by a
+stable key (the default `sort=id` with numeric-id tie-breaking keeps ordering
+deterministic within a single snapshot).
+
+**1. Load more -- fetch the next page.** Keep the page size fixed and increase
+`offset` by it each time:
+
+```bash
+PAGE_SIZE=20
+OFFSET=0
+
+# First page
+curl -s "http://localhost:8080/streams?limit=$PAGE_SIZE&offset=$OFFSET" | jq -r '.[].id'
+
+# Next page: offset += page size
+OFFSET=$((OFFSET + PAGE_SIZE))
+curl -s "http://localhost:8080/streams?limit=$PAGE_SIZE&offset=$OFFSET" | jq -r '.[].id'
+```
+
+**2. Jump to the last page.** Read `X-Total-Count` from the response headers,
+then compute the final offset from it:
+
+```bash
+PAGE_SIZE=20
+
+TOTAL=$(curl -s -D - -o /dev/null \
+  "http://localhost:8080/streams?limit=$PAGE_SIZE&offset=0" \
+  | awk 'tolower($1) == "x-total-count:" { print $2 }' | tr -d '\r')
+
+# Offset of the final page (0 when the list is empty)
+LAST_OFFSET=$(( TOTAL > 0 ? ((TOTAL - 1) / PAGE_SIZE) * PAGE_SIZE : 0 ))
+
+curl -s "http://localhost:8080/streams?limit=$PAGE_SIZE&offset=$LAST_OFFSET" | jq -r '.[].id'
+```
+
+**3. Parallel fetch -- several pages at once.** Issue multiple offset requests
+concurrently and merge the arrays. Because each request is its own snapshot,
+the merged result is only as consistent as the moment each request was served:
+
+```bash
+PAGE_SIZE=20
+
+for OFFSET in 0 20 40; do
+  curl -s "http://localhost:8080/streams?limit=$PAGE_SIZE&offset=$OFFSET" \
+    > "/tmp/streams-page-$OFFSET.json" &
+done
+wait
+
+jq -s 'add' /tmp/streams-page-*.json | jq -r '.[].id'
+```
+
 ### Effective status
 
 The indexer only observes three on-chain events (`create`, `withdraw`,

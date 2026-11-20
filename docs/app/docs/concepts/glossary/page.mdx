@@ -58,6 +58,21 @@ accrued since `start_ledger`. See
 [Streaming Math: Cliff behavior](/docs/concepts/streaming-math#cliff-behavior)
 and the [Stream Contract](/docs/contracts/stream#create_stream) examples.
 
+### Soroban RPC
+
+Soroban RPC is the JSON-RPC endpoint for reading Soroban smart contract state
+and events, including the `getEvents` method used to fetch contract events. The
+indexer reads the Stream contract through Soroban RPC, not Horizon. See the
+[Soroban RPC documentation](https://developers.stellar.org/docs/data/apis/rpc).
+
+### Horizon
+
+Horizon is the REST API for classic Stellar data: accounts, transactions, and
+ledgers. The web app uses Horizon for account and transaction data. Horizon does
+not expose Soroban contract state or events, which is why the indexer uses
+Soroban RPC instead. See the
+[Horizon documentation](https://developers.stellar.org/docs/data/apis/horizon).
+
 <CalloutBox variant="info">
   These definitions cover only the terms above. For the contracts' full error
   codes, see the [Stream Contract](/docs/contracts/stream#streamerror) error
