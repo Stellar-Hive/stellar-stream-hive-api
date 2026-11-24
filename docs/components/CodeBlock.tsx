@@ -38,6 +38,20 @@ function extractText(node: ReactNode): string {
   return "";
 }
 
+/** Shell fence languages whose copied text may carry a `$ ` prompt. */
+const SHELL_LANGUAGES = new Set(["bash", "sh", "shell"]);
+
+/**
+ * Strips a leading `$ ` prompt from every non-empty line, but only when all of
+ * them are prompted -- mixed blocks are left untouched so output lines survive.
+ */
+function stripShellPrompt(text: string): string {
+  const lines = text.split("\n");
+  const nonEmpty = lines.filter((line) => line.trim() !== "");
+  if (nonEmpty.length === 0 || !nonEmpty.every((line) => line.startsWith("$ "))) return text;
+  return lines.map((line) => (line.startsWith("$ ") ? line.slice(2) : line)).join("\n");
+}
+
 /**
  * Replaces MDX's default `<pre>` rendering for fenced code blocks. MDX passes the
  * fenced block's language as a `language-xxx` class on the inner `<code>` element
@@ -55,10 +69,11 @@ export default function CodeBlock(props: { children?: ReactNode }) {
   const language = match?.[1] ?? "text";
   const label = languageLabel(language);
   const text = extractText(children).replace(/\n$/, "");
+  const copyText = SHELL_LANGUAGES.has(language.toLowerCase()) ? stripShellPrompt(text) : text;
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(copyText);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1500);
     } catch {
