@@ -12,6 +12,8 @@ const PAGES_DIR = path.join(DOCS_ROOT, "app", "docs");
 const NAV_FILE = path.join(DOCS_ROOT, "lib", "nav.ts");
 const OUT_FILE = path.join(DOCS_ROOT, "public", "search-index.json");
 const HEADING = /^(#{1,6})\s+(.+?)\s*$/;
+const MAX_SNIPPET = 160;
+const MAX_DESCRIPTION = 200;
 const NAV_ITEM = /title:\s*"([^"]*)",\s*href:\s*"([^"]*)",\s*description:\s*"((?:[^"\\]|\\.)*)"/g;
 
 async function findPages(dir) {
@@ -53,6 +55,38 @@ function headings(text) {
   return found;
 }
 
+// Collapses whitespace and caps length so index entries stay small.
+function cap(text, limit) {
+  const flat = text.replace(/\s+/g, " ").trim();
+  return flat.length <= limit ? flat : `${flat.slice(0, limit - 1).trimEnd()}…`;
+}
+
+// Prose outside fenced code blocks, with MDX imports/exports and JSX removed.
+function snippet(text) {
+  let inFence = false;
+  const lines = [];
+  for (const line of text.split("\n")) {
+    if (line.trimStart().startsWith("```")) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) continue;
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    if (/^(import|export)\s/.test(trimmed)) continue;
+    if (trimmed.startsWith("<")) continue;
+    lines.push(trimmed);
+  }
+  return cap(
+    lines
+      .join(" ")
+      .replace(/`([^`]*)`/g, "$1")
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+      .replace(/[*_>#]/g, ""),
+    MAX_SNIPPET,
+  );
+}
+
 const navSource = await readFile(NAV_FILE, "utf8");
 const navItems = [...navSource.matchAll(NAV_ITEM)].map((match) => ({
   title: match[1],
@@ -65,14 +99,22 @@ const entries = [];
 for (const file of await findPages(PAGES_DIR)) {
   const href = routeFor(file);
   const navItem = navByHref.get(href);
+  const source = await readFile(file, "utf8");
   const pageTitle = navItem?.title ?? href;
-  entries.push({ title: pageTitle, href, section: "", description: navItem?.description ?? "" });
-  for (const heading of headings(await readFile(file, "utf8"))) {
+  entries.push({
+    title: pageTitle,
+    href,
+    section: "",
+    description: cap(navItem?.description ?? "", MAX_DESCRIPTION),
+    snippet: snippet(source),
+  });
+  for (const heading of headings(source)) {
     entries.push({
       title: heading.title,
       href: `${href}#${heading.anchor}`,
       section: pageTitle,
       description: "",
+      snippet: "",
     });
   }
 }
