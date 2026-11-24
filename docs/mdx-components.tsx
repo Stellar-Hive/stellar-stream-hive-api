@@ -5,6 +5,7 @@ import CodeBlock from "@/components/CodeBlock";
 import Details from "@/components/Details";
 import Figure from "@/components/Figure";
 import StreamingCalculator from "@/components/StreamingCalculator";
+import Tabs, { Tab } from "@/components/Tabs";
 
 /**
  * Global overrides applied to every MDX doc page. `CalloutBox` and `ApiEndpoint`
@@ -12,7 +13,8 @@ import StreamingCalculator from "@/components/StreamingCalculator";
  * they take props (variant, method, path) that a blanket override can't supply.
  * `Figure` is exported here so diagrams have a consistent accessible wrapper
  * without an explicit import on every page. `Details` is exported here too, for
- * collapsible reference blocks.
+ * collapsible reference blocks. `Tabs`/`Tab` are exported for multi-language
+ * examples that share one section.
  */
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
@@ -40,6 +42,8 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     Figure,
     Details,
     StreamingCalculator,
+    Tabs,
+    Tab,
     ...components,
   };
 }

@@ -92,9 +92,13 @@ const myStreams = await client.getStreamsByRecipient("GABC...XYZ");
 List endpoints are paginated with `limit` and `offset` query parameters and
 report the total number of matching rows in the `X-Total-Count` response
 header. A common need is "all streams for an address", which means walking
-every page. This helper follows `X-Total-Count` with `limit=200`, increasing
-`offset` until every item has been collected, and throws on a non-OK response
-using the same error shape as the `get` helper above:
+every page. The examples below follow `X-Total-Count` with `limit=200`,
+increasing `offset` until every item has been collected, and throw on a non-OK
+response using the same error shape as the `get` helper above. Pick the tab for
+your language &mdash; the choice is remembered on this device.
+
+<Tabs group="integration-paging">
+<Tab label="TypeScript">
 
 ```typescript
 async function fetchAll<T>(path: string): Promise<T[]> {
@@ -131,6 +135,89 @@ const allForRecipient = await fetchAll<StreamView>(
   `/recipients/${encodeURIComponent("GABC...XYZ")}`,
 );
 ```
+
+</Tab>
+<Tab label="Python">
+
+The same rule applies in Python: parse the string amounts with `int()`, never
+`float()`. This sums `withdrawable_amount` across every stream paid to one
+recipient, following the `X-Total-Count` header so it doesn't stop at the
+default page size:
+
+```python
+import requests
+
+BASE_URL = "http://localhost:8080"
+
+
+def total_withdrawable(recipient: str) -> int:
+    total, offset = 0, 0
+    while True:
+        res = requests.get(
+            f"{BASE_URL}/recipients/{recipient}",
+            params={"limit": 200, "offset": offset},
+            timeout=10,
+        )
+        res.raise_for_status()
+        page = res.json()
+        total += sum(int(stream["withdrawable_amount"]) for stream in page)
+        offset += len(page)
+        if not page or offset >= int(res.headers["X-Total-Count"]):
+            return total
+
+
+print(total_withdrawable("GDEF...UVW"))  # total in stroops
+```
+
+</Tab>
+<Tab label="Rust">
+
+The same read in Rust, using `reqwest` and `serde`. The amounts deserialize as
+`String` and are parsed into `i128`, which is the same representation the API
+uses on the wire. This reads the first page of a recipient's streams (the
+default page size is 50):
+
+```toml
+[dependencies]
+reqwest = { version = "0.12", features = ["json"] }
+serde = { version = "1", features = ["derive"] }
+tokio = { version = "1", features = ["full"] }
+```
+
+```rust
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+struct StreamView {
+    id: String,
+    status: String,
+    // Amounts are i128 values serialized as strings, so parse them explicitly.
+    withdrawable_amount: String,
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let streams: Vec<StreamView> = reqwest::get("http://localhost:8080/recipients/GDEF...UVW")
+        .await?
+        .error_for_status()?
+        .json()
+        .await?;
+
+    let mut total: i128 = 0;
+    for stream in &streams {
+        println!(
+            "stream {} ({}): {}",
+            stream.id, stream.status, stream.withdrawable_amount
+        );
+        total += stream.withdrawable_amount.parse::<i128>()?;
+    }
+    println!("total withdrawable (stroops): {total}");
+    Ok(())
+}
+```
+
+</Tab>
+</Tabs>
 
 ### Browser example
 
@@ -195,7 +282,57 @@ const streams = await fetchAllStreams(
   with `BigInt` before doing any arithmetic, as in the next section.
 </CalloutBox>
 
-## Python example
+## Paging through results
+
+List endpoints are paginated with `limit` and `offset` query parameters and
+report the total number of matching rows in the `X-Total-Count` response
+header. A common need is "all streams for an address", which means walking
+every page. The examples below follow `X-Total-Count` with `limit=200`,
+increasing `offset` until every item has been collected, and throw on a non-OK
+response using the same error shape as the `get` helper above. Pick the tab for
+your language &mdash; the choice is remembered on this device.
+
+<Tabs group="integration-paging">
+<Tab label="TypeScript">
+
+```typescript
+async function fetchAll<T>(path: string): Promise<T[]> {
+  const limit = 200;
+  const items: T[] = [];
+  let offset = 0;
+
+  while (true) {
+    const separator = path.includes("?") ? "&" : "?";
+    const res = await fetch(`${client["baseUrl"]}${path}${separator}limit=${limit}&offset=${offset}`);
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(`${res.status} ${body.error ?? "unknown_error"}: ${body.message ?? res.statusText}`);
+    }
+
+    const page = (await res.json()) as T[];
+    items.push(...page);
+
+    const totalHeader = res.headers.get("X-Total-Count");
+    const total = totalHeader === null ? null : Number(totalHeader);
+    offset += page.length;
+
+    // Stop when the server reports we've seen everything, or when a short
+    // page tells us there is nothing left to fetch.
+    if (page.length < limit) break;
+    if (total !== null && offset >= total) break;
+  }
+
+  return items;
+}
+
+// Example: every stream paying a given recipient, across all pages.
+const allForRecipient = await fetchAll<StreamView>(
+  `/recipients/${encodeURIComponent("GABC...XYZ")}`,
+);
+```
+
+</Tab>
+<Tab label="Python">
 
 The same rule applies in Python: parse the string amounts with `int()`, never
 `float()`. This sums `withdrawable_amount` across every stream paid to one
@@ -227,7 +364,8 @@ def total_withdrawable(recipient: str) -> int:
 print(total_withdrawable("GDEF...UVW"))  # total in stroops
 ```
 
-## Rust example
+</Tab>
+<Tab label="Rust">
 
 The same read in Rust, using `reqwest` and `serde`. The amounts deserialize as
 `String` and are parsed into `i128`, which is the same representation the API
@@ -272,6 +410,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 ```
+
+</Tab>
+</Tabs>
 
 ## Computing `streamed_amount` client-side
 
