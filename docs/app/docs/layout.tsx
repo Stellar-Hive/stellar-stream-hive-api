@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import Breadcrumbs from "@/components/Breadcrumbs";
 import EditOnGitHub from "@/components/EditOnGitHub";
 import PageNav from "@/components/PageNav";
 import Sidebar from "@/components/Sidebar";
@@ -13,6 +14,7 @@ export default function DocsLayout({ children }: { children: ReactNode }) {
       <Sidebar />
       <main id="main-content" tabIndex={-1} className="min-w-0 flex-1 px-6 py-10 lg:px-12">
         <article className="prose prose-slate mx-auto max-w-3xl dark:prose-invert prose-headings:scroll-mt-20 prose-a:text-brand-600 dark:prose-a:text-brand-400">
+          <Breadcrumbs />
           {children}
           <EditOnGitHub />
           <PageNav />

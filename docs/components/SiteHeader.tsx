@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import SearchDialog from "@/components/SearchDialog";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const FOCUS =
@@ -48,6 +49,7 @@ export default function SiteHeader() {
             {repo.label}
           </a>
         ))}
+        <SearchDialog />
         <ThemeToggle />
       </nav>
     </header>
