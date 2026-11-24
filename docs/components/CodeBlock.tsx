@@ -110,7 +110,9 @@ export default function CodeBlock(props: { children?: ReactNode }) {
         </span>
       </div>
       <pre
-        className={`overflow-x-auto p-4 text-sm leading-relaxed text-slate-100 ${wrap ? "whitespace-pre-wrap" : "whitespace-pre"}`}
+        tabIndex={0}
+        aria-label={`${label} code block`}
+        className={`overflow-x-auto p-4 text-sm leading-relaxed text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400 ${wrap ? "whitespace-pre-wrap" : "whitespace-pre"}`}
         {...rest}
       >
         {children}
