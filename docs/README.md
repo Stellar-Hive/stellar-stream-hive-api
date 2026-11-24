@@ -23,12 +23,12 @@ All scripts are run from inside `docs/`.
 | Script | Command | What it does |
 | --- | --- | --- |
 | `dev` | `npm run dev` | Starts the Next.js dev server with hot reload. |
-| `build` | `npm run build` | Produces a production build (`.next/`). Also used in CI to validate every page compiles. |
+| `build` | `npm run build` | Produces a production build (`.next/`). Also used in CI to validate every page compiles. Runs `check-metadata` first, which also writes each page's plain-Markdown copy to `public/markdown/` for the "Copy page as Markdown" button. |
 | `start` | `npm run start` | Serves the production build locally after `npm run build`. |
 | `lint` | `npm run lint` | Runs `next lint` (ESLint) across the workspace. |
 | `check-links` | `npm run check-links` | Runs `scripts/check-links.mjs` to catch broken internal/external links in MDX content. |
 | `check-nav` | `npm run check-nav` | Runs `scripts/check-nav.mjs` to verify every page is reachable from `lib/nav.ts` (no orphaned or dangling nav entries). |
-| `check-metadata` | `npm run check-metadata` | Runs `scripts/check-metadata.mjs` to verify page frontmatter/metadata is present and well-formed. |
+| `check-metadata` | `npm run check-metadata` | Runs `scripts/check-metadata.mjs` to verify page frontmatter/metadata is present and well-formed, and to regenerate `public/markdown/`. |
 | `test:e2e` | `npx playwright test` | Playwright smoke tests (see `e2e/` and `playwright.config.ts`); CI runs this against every sidebar link. |
 
 ## Directory layout

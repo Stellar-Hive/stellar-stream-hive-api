@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 // Checks that every app/docs/**/page.mdx exports a `metadata` object whose
 // `title` and `description` are non-empty string literals (CONTRIBUTING.md).
-import { readdir, readFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { mdxToMarkdown } from "../lib/markdown.ts";
+
 const DOCS_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PAGES_DIR = path.join(DOCS_ROOT, "app", "docs");
+const OUTPUT_DIR = path.join(DOCS_ROOT, "public", "markdown");
 const REQUIRED_FIELDS = ["title", "description"];
 const METADATA_START = /export\s+const\s+metadata\s*=\s*\{/;
 // A string literal: "...", '...' or `...` (no interpolation), with escapes.
@@ -119,12 +122,22 @@ function problemsFor(file, text) {
 const pages = await findPages(PAGES_DIR);
 const problems = [];
 for (const file of pages) {
-  problems.push(...problemsFor(file, await readFile(file, "utf8")));
+  const source = await readFile(file, "utf8");
+  problems.push(...problemsFor(file, source));
+
+  // Also emit the page as plain Markdown, e.g. app/docs/api/stats/page.mdx ->
+  // public/markdown/api/stats.md, which the "Copy page as Markdown" button fetches.
+  const route = path.relative(PAGES_DIR, path.dirname(file));
+  const target = path.join(OUTPUT_DIR, `${route}.md`);
+  await mkdir(path.dirname(target), { recursive: true });
+  await writeFile(target, mdxToMarkdown(source), "utf8");
 }
 
 if (problems.length > 0) {
   console.error(problems.join("\n"));
   process.exitCode = 1;
 } else {
-  console.log(`Checked ${pages.length} pages: every page exports metadata with a title and description.`);
+  console.log(
+    `Checked ${pages.length} pages: every page exports metadata with a title and description. Wrote ${pages.length} Markdown file(s) to public/markdown.`,
+  );
 }
