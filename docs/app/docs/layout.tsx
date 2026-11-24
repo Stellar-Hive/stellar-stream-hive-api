@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 import EditOnGitHub from "@/components/EditOnGitHub";
@@ -5,6 +6,17 @@ import PageNav from "@/components/PageNav";
 import Sidebar from "@/components/Sidebar";
 import TechArticleJsonLd from "@/components/TechArticleJsonLd";
 import Toc from "@/components/Toc";
+
+/** Declares a canonical URL for each docs page, derived from its request path. */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug?: string[] }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const path = ["/docs", ...(slug ?? [])].join("/");
+  return { alternates: { canonical: path } };
+}
 
 export default function DocsLayout({ children }: { children: ReactNode }) {
   return (
