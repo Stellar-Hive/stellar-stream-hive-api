@@ -46,6 +46,7 @@ function extractText(node: ReactNode): string {
  */
 export default function CodeBlock(props: { children?: ReactNode }) {
   const [copied, setCopied] = useState(false);
+  const [wrap, setWrap] = useState(false);
   const { children, ...rest } = props;
 
   const codeElement = isValidElement(children) ? (children as ReactElement<{ className?: string; children?: ReactNode }>) : null;
@@ -70,19 +71,33 @@ export default function CodeBlock(props: { children?: ReactNode }) {
     <div className="group relative my-6 overflow-hidden rounded-lg border border-slate-800 bg-slate-950">
       <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-4 py-1.5">
         <span className="text-xs font-medium text-slate-400">{label}</span>
-        <button
-          type="button"
-          aria-label="Copy code"
-          onClick={handleCopy}
-          className="rounded px-2 py-1 text-xs font-medium text-slate-400 transition hover:bg-slate-800 hover:text-slate-100"
-        >
-          {copied ? "Copied" : "Copy"}
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            aria-pressed={wrap}
+            aria-label="Wrap lines"
+            onClick={() => setWrap((value) => !value)}
+            className="rounded px-2 py-1 text-xs font-medium text-slate-400 transition hover:bg-slate-800 hover:text-slate-100"
+          >
+            {wrap ? "Unwrap" : "Wrap"}
+          </button>
+          <button
+            type="button"
+            aria-label="Copy code"
+            onClick={handleCopy}
+            className="rounded px-2 py-1 text-xs font-medium text-slate-400 transition hover:bg-slate-800 hover:text-slate-100"
+          >
+            {copied ? "Copied" : "Copy"}
+          </button>
+        </div>
         <span className="sr-only" aria-live="polite">
           {copied ? "Code copied to clipboard" : ""}
         </span>
       </div>
-      <pre className="overflow-x-auto p-4 text-sm leading-relaxed text-slate-100" {...rest}>
+      <pre
+        className={`overflow-x-auto p-4 text-sm leading-relaxed text-slate-100 ${wrap ? "whitespace-pre-wrap" : "whitespace-pre"}`}
+        {...rest}
+      >
         {children}
       </pre>
     </div>
