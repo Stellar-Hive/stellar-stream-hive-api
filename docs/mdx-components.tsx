@@ -4,6 +4,7 @@ import type { MDXComponents } from "mdx/types";
 import CodeBlock from "@/components/CodeBlock";
 import Details from "@/components/Details";
 import Figure from "@/components/Figure";
+import Steps from "@/components/Steps";
 import StreamingCalculator from "@/components/StreamingCalculator";
 import Tabs, { Tab } from "@/components/Tabs";
 
@@ -14,7 +15,7 @@ import Tabs, { Tab } from "@/components/Tabs";
  * `Figure` is exported here so diagrams have a consistent accessible wrapper
  * without an explicit import on every page. `Details` is exported here too, for
  * collapsible reference blocks. `Tabs`/`Tab` are exported for multi-language
- * examples that share one section.
+ * examples that share one section. `Steps` is exported for numbered procedures.
  */
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
@@ -41,6 +42,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ),
     Figure,
     Details,
+    Steps,
     StreamingCalculator,
     Tabs,
     Tab,

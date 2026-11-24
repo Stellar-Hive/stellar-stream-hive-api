@@ -71,16 +71,22 @@ You do **not** need any of the above just to query existing streams -- the
   deployment addresses from [`DEPLOYMENTS.md`](https://github.com/Stellar-Hive/stellar-stream-hive-contract/blob/main/DEPLOYMENTS.md).
 </CalloutBox>
 
-1. **Create and fund two testnet identities** -- one to act as sender, one as
-   recipient:
+<Steps>
+  <div>
+
+**Create and fund two testnet identities** -- one to act as sender, one as
+recipient:
 
 ```bash
 stellar keys generate sender --network testnet --fund
 stellar keys generate recipient --network testnet --fund
 ```
 
-2. **Create a stream** paying `recipient` 100 XLM (1,000,000,000 stroops) over
-   roughly one hour (~720 ledgers at 5s/ledger), starting now with no cliff:
+  </div>
+  <div>
+
+**Create a stream** paying `recipient` 100 XLM (1,000,000,000 stroops) over
+roughly one hour (~720 ledgers at 5s/ledger), starting now with no cliff:
 
 ```bash
 CURRENT_LEDGER=$(stellar ledger latest --network testnet | jq -r .sequence)
@@ -100,10 +106,13 @@ stellar contract invoke \
   --cancellable true
 ```
 
-   Stream IDs start at `1`, so the first stream created on a fresh deployment
-   returns `1`.
+Stream IDs start at `1`, so the first stream created on a fresh deployment
+returns `1`.
 
-3. **Watch it accrue** -- either poll the contract directly:
+  </div>
+  <div>
+
+**Watch it accrue** -- either poll the contract directly:
 
 ```bash
 stellar contract invoke \
@@ -112,17 +121,20 @@ stellar contract invoke \
   -- withdrawable_amount --stream_id 1
 ```
 
-   or query the indexer API once it is ready and has picked up the `create`
-   event (polls every 10 seconds -- first check [`GET /ready`](/docs/api/overview#get-ready)
-   reports `synced: true` and `contract_configured: true`, then query the
-   stream; see [API Reference](/docs/api/overview)):
+or query the indexer API once it is ready and has picked up the `create`
+event (polls every 10 seconds -- first check [`GET /ready`](/docs/api/overview#get-ready)
+reports `synced: true` and `contract_configured: true`, then query the
+stream; see [API Reference](/docs/api/overview)):
 
 ```bash
 curl https://<your-api-host>/ready
 curl https://<your-api-host>/streams/0
 ```
 
-4. **Withdraw** whatever has accrued, as the recipient:
+  </div>
+  <div>
+
+**Withdraw** whatever has accrued, as the recipient:
 
 ```bash
 stellar contract invoke \
@@ -133,6 +145,9 @@ stellar contract invoke \
   --recipient "$(stellar keys address recipient)" \
   --stream_id 0
 ```
+
+  </div>
+</Steps>
 
 That's the entire lifecycle. For the fund-safety reasoning behind why
 `withdraw` must be signed by `recipient` specifically, and why the contract
