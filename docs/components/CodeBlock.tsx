@@ -100,7 +100,7 @@ export default function CodeBlock(props: { children?: ReactNode }) {
             type="button"
             aria-label="Copy code"
             onClick={handleCopy}
-            className="rounded px-2 py-1 text-xs font-medium text-slate-400 transition hover:bg-slate-800 hover:text-slate-100"
+            className="rounded px-2 py-1 text-xs font-medium text-slate-400 transition hover:bg-slate-800 hover:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
           >
             {copied ? "Copied" : "Copy"}
           </button>
