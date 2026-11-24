@@ -11,6 +11,7 @@
 /docs/.env*.local
 /docs/next-env.d.ts
 /docs/.turbo
+/docs/public/search-index.json
 
 ## Env
 .env
