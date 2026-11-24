@@ -24,3 +24,15 @@ table tbody tr:nth-child(even) {
 .dark table tbody tr:nth-child(even) {
   background: rgb(15 23 42 / 0.5);
 }
+
+/* Estimated reading time, inserted under the page title by
+   lib/remark-reading-time.mjs. */
+.reading-time {
+  margin-top: -0.75rem;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.dark .reading-time {
+  color: #94a3b8;
+}
