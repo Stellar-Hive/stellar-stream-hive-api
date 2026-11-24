@@ -33,7 +33,8 @@ export const metadata: Metadata = {
 };
 
 // Runs before first paint: applies the saved theme, or the OS preference when none is saved.
-const THEME_SCRIPT = `try{var t=localStorage.getItem("theme");if(t?t==="dark":matchMedia("(prefers-color-scheme: dark)").matches){document.documentElement.classList.add("dark")}}catch(e){}`;
+// Keep in sync with docs/components/ThemeToggle.tsx (storage key "theme", values "light"/"dark").
+const THEME_SCRIPT = `try{var t=localStorage.getItem("theme");var d=t==="dark"||(t!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d)}catch(e){}`;
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
