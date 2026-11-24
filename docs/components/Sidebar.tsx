@@ -40,7 +40,7 @@ export default function Sidebar() {
       >
       {nav.map((group) => (
         <div key={group.title} className="mb-6">
-          <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
             {group.title}
           </p>
           <ul className="space-y-1">
