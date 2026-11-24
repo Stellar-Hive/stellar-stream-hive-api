@@ -119,6 +119,20 @@ export default function HomePage() {
         ))}
       </section>
 
+      <section className="mt-20 rounded-xl border border-brand-200 bg-brand-50/50 p-6 dark:border-brand-900 dark:bg-brand-950/30">
+        <h2 className="font-semibold text-slate-900 dark:text-slate-100">Live on testnet</h2>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          The contracts are deployed to Stellar testnet. The deployed contract addresses are
+          listed in the Getting Started guide.
+        </p>
+        <Link
+          href="/docs/getting-started#deployed-contract-addresses"
+          className="mt-4 inline-block text-sm font-semibold text-brand-600 hover:underline dark:text-brand-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+        >
+          See the deployed contract addresses &rarr;
+        </Link>
+      </section>
+
       <section className="mt-20 rounded-xl border border-slate-200 p-6 dark:border-slate-800">
         <h2 className="font-semibold text-slate-900 dark:text-slate-100">Project status</h2>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
