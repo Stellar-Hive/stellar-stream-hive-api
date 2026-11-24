@@ -62,7 +62,8 @@ Reusable components available to MDX pages (via `mdx-components.tsx`):
 - `StreamingCalculator` — interactive widget for streaming-payment calculations.
 - `TechArticleJsonLd` — emits `TechArticle` structured data (JSON-LD) for SEO.
 - `ThemeToggle` — light/dark theme switcher.
-- `Toc` — in-page table of contents generated from page headings.
+- `Toc` — in-page table of contents generated from page headings (sidebar on wide
+  screens, collapsible "On this page" disclosure above the article on narrow ones).
 
 Use a component in an MDX page the same way you'd use any JSX component:
 
