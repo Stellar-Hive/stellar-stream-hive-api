@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { nav } from "@/lib/nav";
 
@@ -12,16 +12,31 @@ export default function Sidebar() {
   const pathname = usePathname();
   // Below `lg` the nav is collapsed behind a button; on desktop it is always shown.
   const [open, setOpen] = useState(false);
+  const toggleRef = useRef<HTMLButtonElement>(null);
 
   // Collapse again after following a link so the article is visible.
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
 
+  // Close on Escape and return focus to the toggle button.
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        toggleRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
   return (
     <>
       <div className="px-4 pt-4 lg:hidden">
         <button
+          ref={toggleRef}
           type="button"
           aria-expanded={open}
           aria-controls={NAV_ID}
