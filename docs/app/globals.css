@@ -24,3 +24,92 @@ table tbody tr:nth-child(even) {
 .dark table tbody tr:nth-child(even) {
   background: rgb(15 23 42 / 0.5);
 }
+
+/* Print: drop navigation chrome, force light colours, keep code and tables whole. */
+@media print {
+  header,
+  nav,
+  aside,
+  footer,
+  [data-print="hide"] {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+
+  article {
+    max-width: none !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  a,
+  a:visited {
+    color: #000000 !important;
+    text-decoration: underline;
+  }
+
+  /* Show the destination of external links, which print loses. */
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    word-break: break-all;
+  }
+
+  pre,
+  blockquote,
+  table,
+  figure,
+  img,
+  tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  pre {
+    border: 1px solid #cbd5e1;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  table thead th {
+    position: static;
+    background: #ffffff !important;
+  }
+
+  table th,
+  table td {
+    border: 1px solid #cbd5e1;
+  }
+
+  table tbody tr:nth-child(even) {
+    background: #ffffff !important;
+  }
+}
