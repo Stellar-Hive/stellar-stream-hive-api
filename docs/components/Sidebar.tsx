@@ -13,10 +13,26 @@ export default function Sidebar() {
   // Below `lg` the nav is collapsed behind a button; on desktop it is always shown.
   const [open, setOpen] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
+  const navRef = useRef<HTMLElement>(null);
 
   // Collapse again after following a link so the article is visible.
   useEffect(() => {
     setOpen(false);
+  }, [pathname]);
+
+  // Keep the active link visible in the scrollable sidebar on load and route change.
+  useEffect(() => {
+    const active = navRef.current?.querySelector<HTMLElement>(
+      '[aria-current="page"]',
+    );
+    if (!active) return;
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    active.scrollIntoView({
+      block: "nearest",
+      behavior: reduceMotion ? "auto" : "smooth",
+    });
   }, [pathname]);
 
   // Close on Escape and return focus to the toggle button.
@@ -47,6 +63,7 @@ export default function Sidebar() {
         </button>
       </div>
       <nav
+        ref={navRef}
         id={NAV_ID}
         aria-label="Documentation navigation"
         className={`w-full shrink-0 border-slate-200 px-4 py-8 dark:border-slate-800 lg:sticky lg:top-16 lg:block lg:h-[calc(100vh-4rem)] lg:w-64 lg:overflow-y-auto lg:border-r ${
