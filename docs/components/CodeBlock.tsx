@@ -38,6 +38,20 @@ function extractText(node: ReactNode): string {
   return "";
 }
 
+/** Shell fence languages whose copied text may carry a `$ ` prompt. */
+const SHELL_LANGUAGES = new Set(["bash", "sh", "shell"]);
+
+/**
+ * Strips a leading `$ ` prompt from every non-empty line, but only when all of
+ * them are prompted -- mixed blocks are left untouched so output lines survive.
+ */
+function stripShellPrompt(text: string): string {
+  const lines = text.split("\n");
+  const nonEmpty = lines.filter((line) => line.trim() !== "");
+  if (nonEmpty.length === 0 || !nonEmpty.every((line) => line.startsWith("$ "))) return text;
+  return lines.map((line) => (line.startsWith("$ ") ? line.slice(2) : line)).join("\n");
+}
+
 /**
  * Replaces MDX's default `<pre>` rendering for fenced code blocks. MDX passes the
  * fenced block's language as a `language-xxx` class on the inner `<code>` element
@@ -46,6 +60,7 @@ function extractText(node: ReactNode): string {
  */
 export default function CodeBlock(props: { children?: ReactNode }) {
   const [copied, setCopied] = useState(false);
+  const [wrap, setWrap] = useState(false);
   const { children, ...rest } = props;
 
   const codeElement = isValidElement(children) ? (children as ReactElement<{ className?: string; children?: ReactNode }>) : null;
@@ -54,10 +69,11 @@ export default function CodeBlock(props: { children?: ReactNode }) {
   const language = match?.[1] ?? "text";
   const label = languageLabel(language);
   const text = extractText(children).replace(/\n$/, "");
+  const copyText = SHELL_LANGUAGES.has(language.toLowerCase()) ? stripShellPrompt(text) : text;
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(copyText);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1500);
     } catch {
@@ -70,19 +86,35 @@ export default function CodeBlock(props: { children?: ReactNode }) {
     <div className="group relative my-6 overflow-hidden rounded-lg border border-slate-800 bg-slate-950">
       <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-4 py-1.5">
         <span className="text-xs font-medium text-slate-400">{label}</span>
-        <button
-          type="button"
-          aria-label="Copy code"
-          onClick={handleCopy}
-          className="rounded px-2 py-1 text-xs font-medium text-slate-400 transition hover:bg-slate-800 hover:text-slate-100"
-        >
-          {copied ? "Copied" : "Copy"}
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            aria-pressed={wrap}
+            aria-label="Wrap lines"
+            onClick={() => setWrap((value) => !value)}
+            className="rounded px-2 py-1 text-xs font-medium text-slate-400 transition hover:bg-slate-800 hover:text-slate-100"
+          >
+            {wrap ? "Unwrap" : "Wrap"}
+          </button>
+          <button
+            type="button"
+            aria-label="Copy code"
+            onClick={handleCopy}
+            className="rounded px-2 py-1 text-xs font-medium text-slate-400 transition hover:bg-slate-800 hover:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+          >
+            {copied ? "Copied" : "Copy"}
+          </button>
+        </div>
         <span className="sr-only" aria-live="polite">
           {copied ? "Code copied to clipboard" : ""}
         </span>
       </div>
-      <pre className="overflow-x-auto p-4 text-sm leading-relaxed text-slate-100" {...rest}>
+      <pre
+        tabIndex={0}
+        aria-label={`${label} code block`}
+        className={`overflow-x-auto p-4 text-sm leading-relaxed text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-400 ${wrap ? "whitespace-pre-wrap" : "whitespace-pre"}`}
+        {...rest}
+      >
         {children}
       </pre>
     </div>
