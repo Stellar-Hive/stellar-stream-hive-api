@@ -7,13 +7,54 @@ import { useEffect, useRef, useState } from "react";
 import { nav } from "@/lib/nav";
 
 const NAV_ID = "docs-sidebar-nav";
+const COLLAPSED_GROUPS_KEY = "docs-sidebar-collapsed-groups";
+
+function groupId(title: string): string {
+  return `docs-sidebar-group-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+}
+
+function readCollapsedGroups(): string[] {
+  try {
+    const raw = window.localStorage.getItem(COLLAPSED_GROUPS_KEY);
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((value): value is string => typeof value === "string");
+  } catch {
+    return [];
+  }
+}
+
+function writeCollapsedGroups(titles: string[]): void {
+  try {
+    window.localStorage.setItem(COLLAPSED_GROUPS_KEY, JSON.stringify(titles));
+  } catch {
+    // Storage may be unavailable (private mode, quota); collapsing still works.
+  }
+}
 
 export default function Sidebar() {
   const pathname = usePathname();
   // Below `lg` the nav is collapsed behind a button; on desktop it is always shown.
   const [open, setOpen] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState<string[]>([]);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const navRef = useRef<HTMLElement>(null);
+
+  // Restore persisted group state after mount to keep server and client markup equal.
+  useEffect(() => {
+    setCollapsedGroups(readCollapsedGroups());
+  }, []);
+
+  const toggleGroup = (title: string) => {
+    setCollapsedGroups((current) => {
+      const next = current.includes(title)
+        ? current.filter((value) => value !== title)
+        : [...current, title];
+      writeCollapsedGroups(next);
+      return next;
+    });
+  };
 
   // Collapse again after following a link so the article is visible.
   useEffect(() => {
@@ -70,33 +111,52 @@ export default function Sidebar() {
           open ? "block" : "hidden"
         }`}
       >
-      {nav.map((group) => (
-        <div key={group.title} className="mb-6">
-          <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
-            {group.title}
-          </p>
-          <ul className="space-y-1">
-            {group.items.map((item) => {
-              const active = pathname === item.href;
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    aria-current={active ? "page" : undefined}
-                    className={`block rounded-md px-2 py-1.5 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:focus-visible:ring-brand-400 ${
-                      active
-                        ? "bg-brand-100 font-medium text-brand-800 dark:bg-brand-900/40 dark:text-brand-200"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-                    }`}
-                  >
-                    {item.title}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      ))}
+      {nav.map((group) => {
+        const containsActive = group.items.some(
+          (item) => pathname === item.href,
+        );
+        const expanded =
+          containsActive || !collapsedGroups.includes(group.title);
+        const panelId = groupId(group.title);
+        return (
+          <div key={group.title} className="mb-6">
+            <h2 className="mb-2">
+              <button
+                type="button"
+                aria-expanded={expanded}
+                aria-controls={panelId}
+                onClick={() => toggleGroup(group.title)}
+                className="flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-slate-500 dark:hover:bg-slate-800 dark:focus-visible:ring-brand-400"
+              >
+                <span>{group.title}</span>
+                <span aria-hidden="true" className="text-[0.65rem]">
+                  {expanded ? "▾" : "▸"}
+                </span>
+              </button>
+            </h2>
+            <ul id={panelId} hidden={!expanded} className="space-y-1">
+              {group.items.map((item) => {
+                const active = pathname === item.href;
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      aria-current={active ? "page" : undefined}
+                      className={`block rounded-md px-2 py-1.5 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:focus-visible:ring-brand-400 ${
+                        active
+                          ? "bg-brand-100 font-medium text-brand-800 dark:bg-brand-900/40 dark:text-brand-200"
+                          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                      }`}
+                    >
+                      {item.title}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      })}
       </nav>
     </>
   );
