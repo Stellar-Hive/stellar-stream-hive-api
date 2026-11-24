@@ -24,3 +24,15 @@ table tbody tr:nth-child(even) {
 .dark table tbody tr:nth-child(even) {
   background: rgb(15 23 42 / 0.5);
 }
+
+/* Copy-link button on h2/h3: hidden until the heading is hovered or the
+   button is focused, so it never competes with the heading text. */
+.heading-copy {
+  visibility: hidden;
+}
+
+.group\/heading:hover .heading-copy,
+.group\/heading:focus-within .heading-copy,
+.heading-copy:focus-visible {
+  visibility: visible;
+}

@@ -4,6 +4,7 @@ import type { MDXComponents } from "mdx/types";
 import CodeBlock from "@/components/CodeBlock";
 import Details from "@/components/Details";
 import Figure from "@/components/Figure";
+import HeadingAnchor from "@/components/HeadingAnchor";
 import StreamingCalculator from "@/components/StreamingCalculator";
 
 /**
@@ -40,6 +41,9 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     Figure,
     Details,
     StreamingCalculator,
+    // h2/h3 get a copy-link button that copies the absolute section URL.
+    h2: (props) => <HeadingAnchor as="h2" {...props} />,
+    h3: (props) => <HeadingAnchor as="h3" {...props} />,
     ...components,
   };
 }
