@@ -43,10 +43,14 @@ function extractText(node: ReactNode): string {
  * fenced block's language as a `language-xxx` class on the inner `<code>` element
  * (e.g. ` ```rust ` produces `<code class="language-rust">`), which we surface as
  * a small label, plus a copy-to-clipboard button.
+ *
+ * A fence meta string of the form `title="..."` (e.g. ` ```ts title="api/src/main.rs" `)
+ * is lifted onto the `<pre>` as `data-title` by `lib/rehype-code-title.mjs` and shown
+ * in the header next to the language label.
  */
-export default function CodeBlock(props: { children?: ReactNode }) {
+export default function CodeBlock(props: { children?: ReactNode; "data-title"?: string }) {
   const [copied, setCopied] = useState(false);
-  const { children, ...rest } = props;
+  const { children, "data-title": title, ...rest } = props;
 
   const codeElement = isValidElement(children) ? (children as ReactElement<{ className?: string; children?: ReactNode }>) : null;
   const className = codeElement?.props.className ?? "";
@@ -69,7 +73,14 @@ export default function CodeBlock(props: { children?: ReactNode }) {
   return (
     <div className="group relative my-6 overflow-hidden rounded-lg border border-slate-800 bg-slate-950">
       <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-4 py-1.5">
-        <span className="text-xs font-medium text-slate-400">{label}</span>
+        <span className="flex min-w-0 items-center gap-2">
+          {title ? (
+            <span className="truncate text-xs font-medium text-slate-200" title={title}>
+              {title}
+            </span>
+          ) : null}
+          <span className="shrink-0 text-xs font-medium text-slate-400">{label}</span>
+        </span>
         <button
           type="button"
           aria-label="Copy code"
