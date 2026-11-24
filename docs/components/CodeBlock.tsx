@@ -39,14 +39,45 @@ function extractText(node: ReactNode): string {
 }
 
 /**
+ * Parses a `{2,4-6}` line spec into a set of 1-based line numbers. Malformed
+ * entries are ignored rather than throwing, so a typo never breaks the build.
+ */
+function parseHighlight(spec: string | undefined): Set<number> {
+  const lines = new Set<number>();
+  if (!spec) return lines;
+  for (const part of spec.split(",")) {
+    const range = /^(\d+)(?:-(\d+))?$/.exec(part.trim());
+    if (!range) continue;
+    const start = Number(range[1]);
+    const end = range[2] ? Number(range[2]) : start;
+    if (start < 1 || end < start) continue;
+    for (let line = start; line <= end; line += 1) lines.add(line);
+  }
+  return lines;
+}
+
+/**
  * Replaces MDX's default `<pre>` rendering for fenced code blocks. MDX passes the
  * fenced block's language as a `language-xxx` class on the inner `<code>` element
  * (e.g. ` ```rust ` produces `<code class="language-rust">`), which we surface as
  * a small label, plus a copy-to-clipboard button.
+ *
+ * A fence meta string of the form `title="..."` (e.g. ` ```ts title="api/src/main.rs" `)
+ * is lifted onto the `<pre>` as `data-title` by `lib/rehype-code-title.mjs` and shown
+ * in the header next to the language label.
+ *
+ * A fence meta string of the form `{2,4-6}` (e.g. ` ```rust {2,4-6} `) is lifted
+ * onto the `<pre>` as `data-highlight` by the same plugin and highlights those
+ * 1-based lines. Highlighting is purely visual: the copy button still copies the
+ * plain text extracted from the code children.
  */
-export default function CodeBlock(props: { children?: ReactNode }) {
+export default function CodeBlock(props: {
+  children?: ReactNode;
+  "data-title"?: string;
+  "data-highlight"?: string;
+}) {
   const [copied, setCopied] = useState(false);
-  const { children, ...rest } = props;
+  const { children, "data-title": title, "data-highlight": highlight, ...rest } = props;
 
   const codeElement = isValidElement(children) ? (children as ReactElement<{ className?: string; children?: ReactNode }>) : null;
   const className = codeElement?.props.className ?? "";
@@ -54,6 +85,8 @@ export default function CodeBlock(props: { children?: ReactNode }) {
   const language = match?.[1] ?? "text";
   const label = languageLabel(language);
   const text = extractText(children).replace(/\n$/, "");
+  const highlighted = parseHighlight(highlight);
+  const codeLines = highlighted.size > 0 ? text.split("\n") : null;
 
   const handleCopy = async () => {
     try {
@@ -69,7 +102,14 @@ export default function CodeBlock(props: { children?: ReactNode }) {
   return (
     <div className="group relative my-6 overflow-hidden rounded-lg border border-slate-800 bg-slate-950">
       <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-4 py-1.5">
-        <span className="text-xs font-medium text-slate-400">{label}</span>
+        <span className="flex min-w-0 items-center gap-2">
+          {title ? (
+            <span className="truncate text-xs font-medium text-slate-200" title={title}>
+              {title}
+            </span>
+          ) : null}
+          <span className="shrink-0 text-xs font-medium text-slate-400">{label}</span>
+        </span>
         <button
           type="button"
           aria-label="Copy code"
@@ -83,7 +123,24 @@ export default function CodeBlock(props: { children?: ReactNode }) {
         </span>
       </div>
       <pre className="overflow-x-auto p-4 text-sm leading-relaxed text-slate-100" {...rest}>
-        {children}
+        {codeLines ? (
+          <code>
+            {codeLines.map((line, index) => (
+              <span
+                key={index}
+                className={
+                  highlighted.has(index + 1)
+                    ? "block bg-slate-800/70"
+                    : "block"
+                }
+              >
+                {line || " "}
+              </span>
+            ))}
+          </code>
+        ) : (
+          children
+        )}
       </pre>
     </div>
   );

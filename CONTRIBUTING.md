@@ -91,6 +91,16 @@ npm run lint
   - Fenced code blocks (` ```typescript `, ` ```rust `, ` ```bash `, etc.) are
     automatically rendered through `components/CodeBlock.tsx` with a language
     label and copy button -- no need to wrap them in anything yourself.
+    Add a `title="..."` meta string to show a filename or heading in the block
+    header, next to the language label:
+
+    ````mdx
+    ```ts title="api/src/main.rs"
+    // ...
+    ```
+    ````
+
+    The title is optional; fences without one render exactly as before.
 - Internal links use root-relative paths without a trailing slash, e.g.
   `[Streaming Math](/docs/concepts/streaming-math)`. Link to a specific
   heading with `#kebab-case-of-the-heading-text`, e.g.
