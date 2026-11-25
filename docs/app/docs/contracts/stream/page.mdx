@@ -49,7 +49,7 @@ pub struct Stream {
 | `id` | `u64` | Assigned by the Stream contract itself at creation time, from a per-contract counter that starts at `1` and is never reused; stable for the life of the stream. |
 | `sender` | `Address` | Funded the stream; may cancel it if `cancellable`. |
 | `recipient` | `Address` | The only address that may withdraw. |
-| `token` | `Address` | The [Soroban](/docs/concepts/glossary#soroban) token contract (e.g. the XLM SAC, or any SEP-41-compatible token) being streamed. |
+| `token` | `Address` | The [Soroban](/docs/resources#soroban) token contract (e.g. the XLM SAC, or any SEP-41-compatible token) being streamed. |
 | `total_amount` | `i128` | Total deposited, in the token's smallest unit. Immutable after creation. |
 | `withdrawn` | `i128` | Running total already paid out to `recipient`. Only ever increases. |
 | `start_ledger` | `u32` | Ledger sequence accrual begins at. |
@@ -66,7 +66,7 @@ pub struct Stream {
   sequence, `streamed_amount`, `withdrawable_amount` and `progress_percent` are
   computed at read time, and there is no `cancelled_at_ledger` field. For a
   field-by-field mapping between the two, see
-  [API: Streams](/docs/api/streams#field-mapping-contract-vs-api).
+  [API: Streams](/docs/api/streams#contract-stream-vs-api-stream).
 </CalloutBox>
 
 ### `StreamStatus`
@@ -681,7 +681,7 @@ the struct definitions.
 
 The indexer in `stellar-stream-hive-api` (`api/src/indexer/events.rs`) decodes
 only the Stream contract's `create`, `withdraw`, and `cancel` events, which it
-reads from [Soroban](/docs/concepts/glossary#soroban) RPC `getEvents` filtered to the Stream contract. Its module
+reads from [Soroban](/docs/resources#soroban) RPC `getEvents` filtered to the Stream contract. Its module
 doc comment is the canonical reference for that wire format. `cancel`'s
 `streamed_now` is what the recipient keeps (and may still withdraw, minus
 `withdrawn`).

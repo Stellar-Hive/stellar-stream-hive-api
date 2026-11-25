@@ -7,6 +7,15 @@ import remarkGfm from "remark-gfm";
 const nextConfig = {
   pageExtensions: ["ts", "tsx", "mdx"],
   reactStrictMode: true,
+  async redirects() {
+    return [
+      {
+        source: "/docs",
+        destination: "/docs/getting-started",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 const withMDX = createMDX({
