@@ -19,7 +19,7 @@ export default function SiteHeader() {
   const onDocs = pathname.startsWith("/docs");
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-slate-200 bg-white/80 px-6 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
+    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-slate-200 bg-white/80 px-3 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80 sm:px-6">
       <Link
         href="/"
         className={`flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100 ${FOCUS}`}
@@ -29,7 +29,7 @@ export default function SiteHeader() {
         </span>
         Stellar Stream Hive
       </Link>
-      <nav aria-label="Primary" className="flex items-center gap-5 text-sm">
+      <nav aria-label="Primary" className="flex items-center gap-3 text-sm sm:gap-5">
         <Link
           href="/docs/getting-started"
           aria-current={onDocs ? "page" : undefined}
@@ -48,6 +48,26 @@ export default function SiteHeader() {
             {repo.label}
           </a>
         ))}
+        <details className="relative sm:hidden">
+          <summary
+            className={`cursor-pointer list-none text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 [&::-webkit-details-marker]:hidden ${FOCUS}`}
+          >
+            Links
+          </summary>
+          <div className="absolute right-0 top-full mt-2 flex min-w-36 flex-col gap-1 rounded-md border border-slate-200 bg-white p-2 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+            {REPOS.map((repo) => (
+              <a
+                key={repo.href}
+                href={repo.href}
+                target="_blank"
+                rel="noreferrer"
+                className={`rounded-sm px-2 py-1 text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100 ${FOCUS}`}
+              >
+                {repo.label}
+              </a>
+            ))}
+          </div>
+        </details>
         <ThemeToggle />
       </nav>
     </header>
